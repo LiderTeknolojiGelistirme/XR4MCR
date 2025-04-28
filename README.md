@@ -84,4 +84,4 @@ This project is licensed under the Apache-2.0 License - see the LICENSE file for
 
 ## Acknowledgements
 
-This project was developed by Lider Teknoloji Geliştirme as part of an industrial training initiative.
+This work is co-funded by the European Union (EU) under grant number 101093079 (project MASTER, https://www.master-xr.eu).
