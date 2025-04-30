@@ -1,0 +1,31 @@
+{
+    "m_Dictionary": {
+        "m_DictionaryValues": [
+            {
+                "type": "Virtualware.Localization.Editor.LocalizationTextGroupProvider[], Virtualware.Localization.Editor, Version=2.1.18.0, Culture=neutral, PublicKeyToken=null",
+                "key": "additionalTextGroupProviders",
+                "value": "{\"m_Value\":[]}"
+            },
+            {
+                "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "key": "relativeFilePath",
+                "value": "{\"m_Value\":\"../Assets/StreamingAssets/texts.json\"}"
+            },
+            {
+                "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "key": "keyName",
+                "value": "{\"m_Value\":\"texts\"}"
+            },
+            {
+                "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "key": "relativeFolderPath",
+                "value": "{\"m_Value\":\"\"}"
+            },
+            {
+                "type": "Virtualware.Localization.Editor.LocalizationResxFolderProvider[], Virtualware.Localization.Editor, Version=2.1.18.0, Culture=neutral, PublicKeyToken=null",
+                "key": "additionalResxFolderPaths",
+                "value": "{\"m_Value\":[]}"
+            }
+        ]
+    }
+}

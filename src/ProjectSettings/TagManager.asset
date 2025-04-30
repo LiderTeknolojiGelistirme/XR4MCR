@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Root
+  - Chaperone
+  - ArenaRoot
+  - Selectable
+  - ProgressCircle
+  - NotInteractible
+  - DescriptionActionNode
+  - RemoveInput
+  - UR10
+  - sphere
+  - StopInput
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - RayInteraction
+  - XR_Controllers
+  - Physics_Floor
+  - Player
+  - Hands
+  - Hands_Interaction
+  - Menu
+  - Chaperone
+  - Postprocessing
+  - GrabInteraction
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - SceneLoadingVisualizer
+  - SceneLoadingVisualizerUI
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
