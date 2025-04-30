@@ -1,3 +1,6 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:5f4b3c13ccc2d50c8f5eeff335b97dc2661c99e2003c8e3a58d41fa1989f1bb7
-size 115
+fileFormatVersion: 2
+guid: eb5315e2f77c540b6bf545720e84d3a5
+labels:
+- Particles
+NativeFormatImporter:
+  userData: 

@@ -5,41 +5,46 @@ using UnityEngine;
 using Presenters;
 using UnityEngine.UI;
 using System.Linq;
+using System.Xml.Serialization;
 using UnityEditor;
 using UnityEngine.Serialization;
+using NodeSystem;
 using static Presenters.PortPresenter;
 
 namespace Models
 {
+    
     [Serializable]
     public class Port
     {
         // Unique identifier for the port
-        public string ID { get; }
-              
-        // Reference to parent node
-        public BaseNodePresenter ParentBaseNode { get => baseNode; private set => baseNode = value; }
+        public string ID { get; set; }
+        
+        // Node ID for serialization
+        public string NodeID { get; set; }
+        
+        // Name property serialization için gerekli
+        public string Name { get; set; }
         
         // Maximum allowed connections (0 indicates no limit)
         public int MaxConnections { get; set; } = 0;
+        
+        // Polarity type as string for serialization
+        public string PolarityTypeString { get; set; }
+        
+        // XML serializasyon için boş constructor
+        public Port() { }
 
-        public Port(PolarityType type, string name, BaseNodePresenter baseNodeModel)
+        public Port(NodeSystem.PolarityType type, string name, BaseNodePresenter baseNodeModel)
         {
             Polarity = type;
             ID = Guid.NewGuid().ToString();
             Name = name;
             baseNode = baseNodeModel;
+            NodeID = baseNodeModel.Model.ID;
+            PolarityTypeString = type.ToString();
         }
-
-        // Parent node'u ayarlamak için metod
-        public void SetParentNode(BaseNodePresenter baseNode)
-        {
-            ParentBaseNode = baseNode;
-        }
-
-        // PortReference oluşturmak için yardımcı metod
-        
-
+       
         // Secondary identifier, lazily generated if empty
         [HideInInspector, SerializeField] private string _sID = "";
         public string SID
@@ -56,24 +61,37 @@ namespace Models
         }
 
         // RectTransform reference for UI positioning
+        [XmlIgnore]
         [HideInInspector] public RectTransform rectTransform;
 
         // Reference to the GraphManager instance
+        [XmlIgnore]
         public GraphManager graphManager;
+        
         // Associated Node instance
+        [XmlIgnore]
         [FormerlySerializedAs("node")] [HideInInspector] public BaseNodePresenter baseNode;
 
-
         // Polarity setting for this port
-        [SerializeField] private PolarityType _polarity = PolarityType.Bidirectional;
-        public PolarityType Polarity
+        [SerializeField] private NodeSystem.PolarityType _polarity = NodeSystem.PolarityType.Bidirectional;
+        
+        [XmlIgnore]
+        public NodeSystem.PolarityType Polarity
         {
-            get => _polarity;
-            set => _polarity = value;
+            get => string.IsNullOrEmpty(PolarityTypeString) ? 
+                NodeSystem.PolarityType.Bidirectional : 
+                (NodeSystem.PolarityType)Enum.Parse(typeof(NodeSystem.PolarityType), PolarityTypeString);
+            set 
+            { 
+                _polarity = value;
+                PolarityTypeString = value.ToString();
+            }
         }
 
         // Sprites for port representation based on connection state
+        [XmlIgnore]
         public Sprite iconUnconnected;
+        [XmlIgnore]
         public Sprite iconConnected;
 
         // Colors for various port states
@@ -83,12 +101,16 @@ namespace Models
         public Color iconColorConnected = new Color(0.98f, 0.94f, 0.84f);
 
         // UI Image component used for displaying the port
+        [XmlIgnore]
         public Image image;
         // Control point for handling port connections
+        [XmlIgnore]
         [HideInInspector] private PortControlPoint controlPoint;
+        [XmlIgnore]
         public PortControlPoint ControlPoint { get => controlPoint; set => controlPoint = value; }
 
         // Gets or sets the color of the port's image element
+        [XmlIgnore]
         public Color ElementColor
         {
             get => image != null ? image.color : Color.clear;
@@ -96,6 +118,7 @@ namespace Models
         }
 
         // Fixed priority value
+        [XmlIgnore]
         public int Priority => 2;
 
         // Flag to enable or disable drag behavior
@@ -123,14 +146,18 @@ namespace Models
         }
 
         // Reference to the last found port during connection checks
+        [XmlIgnore]
         [HideInInspector] public Port lastFoundPort;
         // Private field for the closest found port (currently unused)
+        [XmlIgnore]
         private Port closestFoundPort;
 
         // Indicates whether the port can accept additional connections
+        [XmlIgnore]
         public bool HasSpots => MaxConnections == 0 || ConnectionsCount < MaxConnections;
 
         // Counts the number of connections currently associated with this port
+        [XmlIgnore]
         public int ConnectionsCount
         {
             get
@@ -140,19 +167,12 @@ namespace Models
             }
         }
 
-        public string Name { get; }
-
         // Yeni özellikler ekle
+        [XmlIgnore]
         public bool IsConnected => ConnectionsCount > 0;
+        [XmlIgnore]
         public bool CanConnect => !IsConnected || MaxConnections > ConnectionsCount;
         
         // Validation için
-        public bool CanConnectTo(Port other)
-        {
-            return Polarity != other.Polarity && 
-                   CanConnect && 
-                   other.CanConnect && 
-                   ParentBaseNode?.ID != other.ParentBaseNode?.ID;
-        }
     }
 }

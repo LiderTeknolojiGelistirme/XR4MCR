@@ -6,6 +6,7 @@ using NodeSystem.Events;
 using CustomGraphics;
 using Enums;
 using Factories;
+using RuntimeGizmos;
 
 public class GraphSceneInstaller : MonoInstaller
 {
@@ -24,7 +25,12 @@ public class GraphSceneInstaller : MonoInstaller
             .FromInstance(nodeConfigPrefab)
             .AsSingle();
 
-        // Managers - GraphManager'ı sahneden alacağız
+        // Log Manager - Bilgi kanvası için
+        Container.Bind<LogManager>()
+            .FromComponentInHierarchy()
+            .AsSingle();
+
+        // Managers
         Container.Bind<GraphManager>()
             .FromComponentInHierarchy()
             .AsSingle();
@@ -36,15 +42,21 @@ public class GraphSceneInstaller : MonoInstaller
         Container.Bind<ScenarioManager>()
             .FromComponentInHierarchy()
             .AsSingle();
+        
+
+        // UI Manager
+        Container.Bind<UIManager>()
+            .FromComponentInHierarchy()
+            .AsSingle();
 
         // InputManager'ı SystemManager'ın oluşturduğu instance'dan alıyoruz
         Container.Bind<XRInputManager>()
-            .FromComponentInHierarchy()  // Sahnede var olan componenti kullan
+            .FromComponentInHierarchy() // Sahnede var olan componenti kullan
             .AsSingle();
 
         Container.Bind<Raycaster>()
-            .AsSingle();  // Normal bir sınıf olarak bağla
-            
+            .AsSingle(); // Normal bir sınıf olarak bağla
+
         Container.Bind<Pointer>()
             .FromComponentInHierarchy()
             .AsSingle();
@@ -59,5 +71,9 @@ public class GraphSceneInstaller : MonoInstaller
 
         Container.BindFactory<ConnectionPresenter, ConnectionPresenterFactory>()
             .AsSingle();
+
+        // Object Factory - 3D nesneleri oluşturmak için
+        Container.BindFactory<ObjectType, GameObject, ObjectFactory>()
+            .FromFactory<ObjectFactory>();
     }
-} 
+}

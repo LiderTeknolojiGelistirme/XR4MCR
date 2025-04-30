@@ -58,6 +58,31 @@ namespace Managers
                 return _ltgEvents;
             }
         }
+        
+        private GameObject _selected3DObject;
+        
+        // 3D nesnesi seçimi için güvenli Property
+        public GameObject Selected3DObject 
+        { 
+            get { return _selected3DObject; }
+            set 
+            {
+                // Değer değiştiğinde debug bilgisi
+                if (_selected3DObject != value)
+                {
+                    if (value != null)
+                    {
+                        Debug.Log($"3D Object selected: {value.name}");
+                    }
+                    else
+                    {
+                        Debug.Log("3D Object selection cleared");
+                    }
+                }
+                
+                _selected3DObject = value;
+            }
+        }
 
         void OnEnable()
         {

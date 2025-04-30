@@ -1,8 +1,10 @@
 using System.Collections;
+using RuntimeGizmos;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 using Viroo;
 using Wave.Native;
+
 
 public class MR_Passthrough : MonoBehaviour
 {
@@ -58,9 +60,15 @@ public class MR_Passthrough : MonoBehaviour
             {
                 yield return new WaitForSeconds(0.1f);
             }
+            else
+            {
+                cam.gameObject.AddComponent<TransformGizmo>();
+                break;
+            }
         }
 
         go = cam.gameObject;
+        //go.AddComponent<>();
         go.GetComponent<PostProcessLayer>().enabled = false;
 
         savedColor = cam.backgroundColor;

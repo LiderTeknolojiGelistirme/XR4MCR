@@ -17,5 +17,7 @@ namespace Managers
         public abstract UnityEvent e_OnPointerUp { get; set; }
         public abstract UnityEvent e_OnDelete { get; set; }
         public abstract UnityEvent e_OnPointerHover { get; set; }
+
+        
     }
 }

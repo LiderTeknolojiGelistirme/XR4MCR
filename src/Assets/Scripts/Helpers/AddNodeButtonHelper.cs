@@ -2,6 +2,7 @@
 using Enums;
 using Managers;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Zenject;
 
@@ -18,7 +19,7 @@ namespace Helpers
         private void Awake()
         {
             _button = GetComponent<Button>();
-            _button.onClick.AddListener(AddNode);
+            //_button.onClick.AddListener(AddNode);
         }
 
         public void AddNode()
@@ -30,5 +31,6 @@ namespace Helpers
         {
             _button.onClick.RemoveListener(AddNode);
         }
+        
     }
 }

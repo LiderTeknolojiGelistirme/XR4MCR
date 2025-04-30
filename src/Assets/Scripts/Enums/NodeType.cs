@@ -4,8 +4,21 @@
     {
         Start,
         Finish,
-        GetKeyDownL,
-        GetKeyDownT,
-        GetKeyDownG
+        TouchNode,
+        GrabNode,
+        WaitForNextNode,
+        LookNode,
+        LogicalOR,
+        LogicalAND,
+        // Action Node Tipleri
+        PlaySoundAction,
+        ChangeMaterialAction,
+        ChangePositionAction,
+        ChangeRotationAction,
+        ChangeScaleAction,
+        ToggleObjectAction,
+        PlayAnimationAction,
+        DescriptionActionNode,
+        RobotAnimationAction
     }
 }

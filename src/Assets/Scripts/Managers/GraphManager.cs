@@ -11,6 +11,7 @@ using Enums;
 using Factories;
 using Models;
 using Presenters.NodePresenters;
+using Unity.XR.CoreUtils;
 using Zenject;
 using LTGLineRenderer = CustomGraphics.LTGLineRenderer;
 using Object = UnityEngine.Object;
@@ -24,8 +25,11 @@ namespace Managers
     [RequireComponent(typeof(GraphicRaycaster))]
     public class GraphManager : MonoBehaviour
     {
+        public RectTransform contentTransform;
+        public ScrollRect scrollRect;
         public Camera MainCamera;
         private LTGLineRenderer _lineRenderer;
+        public Image gridImage;
         public LTGLineRenderer LineRenderer => _lineRenderer;
         public Line ghostConnectionLine;
         public Pointer Pointer { get; private set; }
@@ -56,6 +60,8 @@ namespace Managers
         private NodePresenterFactory _nodePresenterFactory;
         private XRInputManager _inputManager;
         private bool _isInitialized = false;
+        
+        private ObjectFactory _objectFactory;
 
         private string _filePath;
 
@@ -76,10 +82,16 @@ namespace Managers
             if (connectionPresenter != null)
             {
                 _connectionPresenters.Add(connectionPresenter);
+                
+                // Bilgi paneline bağlantı oluşturuldu logu ekle
+                LogManager.LogInteraction($"Connection created: {sourcePort.gameObject.name} -> {targetPort.gameObject.name}");
             }
             else
             {
                 Debug.LogWarning("Connection creation failed - Factory returned null");
+                
+                // Bilgi paneline bağlantı başarısız logu ekle
+                LogManager.LogWarning($"Connection failed: {sourcePort.gameObject.name} -> {targetPort.gameObject.name}");
             }
 
             return connectionPresenter;
@@ -102,14 +114,7 @@ namespace Managers
         // Connection modellerine erişmek için extension
         public IEnumerable<Connection> ConnectionModels => _connectionPresenters.Select(p => p.Model);
 
-        private bool IsValidConnection(PortReference source, PortReference target)
-        {
-            // Temel validasyon kontrolleri
-            // - Port'lar mevcut mu?
-            // - Aynı node'a mı bağlanmaya çalışıyor?
-            // - Port tipleri uyumlu mu? vs.
-            return true; // şimdilik
-        }
+        
 
         public IEnumerable<Connection> GetPortConnections(PortPresenter portRef)
         {
@@ -148,7 +153,7 @@ namespace Managers
         public void Construct(NodeConfig config, SystemManager systemManager,
             ConnectionPresenterFactory connectionPresenterFactory, NodePresenterFactory nodePresenterFactory,
             XRInputManager inputManager,
-            Pointer pointer, LTGLineRenderer lineRenderer)
+            Pointer pointer, LTGLineRenderer lineRenderer, ObjectFactory objectFactory)
         {
             Debug.Log("ENTER: GraphManager Construct");
             // Eğer zaten construct edilmişse çık
@@ -168,6 +173,8 @@ namespace Managers
             _inputManager = inputManager;
             _pointer = pointer.gameObject;
             _lineRenderer = lineRenderer;
+            _objectFactory = objectFactory;
+            
             if (_lineRenderer == null)
             {
                 Debug.LogError("LTGLineRenderer null!");
@@ -315,6 +322,14 @@ namespace Managers
         public BaseNodePresenter CreateNodeAtPosition(Vector2 position, NodeType nodeType)
         {
             var nodePresenter = CreateNodePresenter(position, nodeType);
+            
+            // Pozisyonu açıkça ayarla (factory'nin doğru ayarlamadığı durumlara karşı)
+            RectTransform rectTransform = nodePresenter.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                rectTransform.anchoredPosition = position;
+            }
+            
             switch (nodeType)
             {
                 case NodeType.Start:
@@ -332,7 +347,6 @@ namespace Managers
                     _model.AddNode(nodePresenter);
                     return nodePresenter;
             }
-            
         }
 
         private BaseNodePresenter CreateNodePresenter(Vector2 position, NodeType nodeType)
@@ -351,30 +365,39 @@ namespace Managers
 
         public void CreateStartNode()
         {
-            Vector2 center = Vector2.zero;
-            CreateNodeAtPosition(center, NodeType.Start);
+            // Start node'u sol tarafa yerleştir (sabit değer kullanarak)
+            Vector2 leftPosition = new Vector2(-800f, 0);
+            CreateNodeAtPosition(leftPosition, NodeType.Start);
         }
 
         public void CreateFinishNode()
         {
-            Vector2 center = Vector2.zero;
-            CreateNodeAtPosition(center, NodeType.Finish);
+            // Finish node'u sağ tarafa yerleştir (sabit değer kullanarak)
+            Vector2 rightPosition = new Vector2(500f, 0);
+            CreateNodeAtPosition(rightPosition, NodeType.Finish);
         }
 
         public void Clear()
         {
-            foreach (var item in ConnectionPresenters)
+            // Bağlantıları temizle
+            foreach (var connection in _connectionPresenters.ToList())
             {
-                Object.Destroy(item.gameObject);
+                if (connection != null && connection.gameObject != null)
+                    Destroy(connection.gameObject);
             }
-
             _connectionPresenters.Clear();
-
-            // if (_previewConnection != null)
-            // {
-            //     Object.Destroy(_previewConnection.gameObject);
-            //     _previewConnection = null;
-            // }
+            
+            // Node'ları temizle
+            foreach (var node in _nodePresenters.ToList())
+            {
+                if (node != null && node.gameObject != null)
+                    Destroy(node.gameObject);
+            }
+            _nodePresenters.Clear();
+            
+            // Başlangıç ve bitiş node referanslarını sıfırla
+            StartNode = null;
+            FinishNode = null;
         }
 
         public PortPresenter FindPortPresenter(PortPresenter portRef)
@@ -409,37 +432,68 @@ namespace Managers
         }
         public void SaveGraph()
         {
-            NodeGraphData graphData = new NodeGraphData
+            SaveFile saveFile = new SaveFile
             {
-                Nodes = new List<NodeData>(),
-                Connections = new List<ConnectionData>()
+                Nodes = new List<BaseNode>(),
+                Connections = new List<ConnectionInfo>(),
+                SceneObjects = new List<SceneObjectInfo>()
             };
 
+            // Node'ları kaydet
             foreach (var nodePresenter in _nodePresenters)
             {
-                NodeData nodeData = new NodeData
+                var model = nodePresenter.Model;
+                // Pozisyon bilgilerini güncelle
+                var rectTransform = nodePresenter.GetComponent<RectTransform>();
+                model.PosX = rectTransform.anchoredPosition.x;
+                model.PosY = rectTransform.anchoredPosition.y;
+                
+                // Renk bilgilerini güncelle
+                model.Color = model.Color; // Setter ile bileşenleri günceller
+                
+                // Port bilgilerini güncelle
+                model.Ports.Clear();
+                foreach (var port in nodePresenter.Ports)
                 {
-                    ID = nodePresenter.Model.ID,
-                    Type = nodePresenter.GetType().Name,
-                    Position = nodePresenter.transform.localPosition,
-                    Ports = nodePresenter.Ports.Select(p => new PortData { ID = p.ID, Type = p.Polarity.ToString() }).ToList()
-                };
-                graphData.Nodes.Add(nodeData);
+                    // Port bilgilerini güncelle
+                    port.Model.NodeID = model.ID;
+                    port.Model.PolarityTypeString = port.Polarity.ToString();
+                    
+                    // Port'u modelin portlarına ekle
+                    model.Ports.Add(port.Model);
+                }
+                
+                // Event Port bilgilerini güncelle
+                foreach (var eventPort in nodePresenter.EventPorts)
+                {
+                    // Event Port bilgilerini güncelle 
+                    eventPort.Model.NodeID = model.ID;
+                    eventPort.Model.PolarityTypeString = eventPort.Polarity.ToString();
+                    
+                    // Event Port'u modelin portlarına ekle
+                    model.Ports.Add(eventPort.Model);
+                }
+                
+                saveFile.Nodes.Add(model);
             }
-
-            foreach (var conn in ConnectionPresenters)
+            
+            // Connection'ları kaydet
+            foreach (var connectionPresenter in _connectionPresenters)
             {
-                graphData.Connections.Add(new ConnectionData
-                {
-                    SourcePortID = conn.Model.SourcePort.Model.ID,
-                    TargetPortID = conn.Model.TargetPort.Model.ID
-                });
+                ConnectionInfo connectionInfo = new ConnectionInfo(
+                    connectionPresenter.Model.ID,
+                    connectionPresenter.Model.SourcePort.Model.ID,
+                    connectionPresenter.Model.TargetPort.Model.ID
+                );
+                saveFile.Connections.Add(connectionInfo);
             }
 
-            XmlSerializer serializer = new XmlSerializer(typeof(NodeGraphData));
+            SaveSceneObjects(saveFile);
+
+            XmlSerializer serializer = new XmlSerializer(typeof(SaveFile));
             using (FileStream fs = new FileStream(_filePath, FileMode.Create))
             {
-                serializer.Serialize(fs, graphData);
+                serializer.Serialize(fs, saveFile);
             }
             Debug.Log("Kaydedilen dosya yolu: " + _filePath);
         }
@@ -449,53 +503,303 @@ namespace Managers
             if (!File.Exists(_filePath))
                 return;
 
-            NodeGraphData graphData;
-            XmlSerializer serializer = new XmlSerializer(typeof(NodeGraphData));
+            SaveFile saveFile;
+            XmlSerializer serializer = new XmlSerializer(typeof(SaveFile));
             using (FileStream fs = new FileStream(_filePath, FileMode.Open))
             {
-                graphData = (NodeGraphData)serializer.Deserialize(fs);
+                saveFile = (SaveFile)serializer.Deserialize(fs);
             }
 
+            // Tüm mevcut node'ları ve bağlantıları temizle
             Clear();
 
             // Node'ları tekrar oluştur
-            foreach (var nodeData in graphData.Nodes)
+            foreach (var nodeModel in saveFile.Nodes)
             {
-                NodeType nodeType = (NodeType)Enum.Parse(typeof(NodeType), nodeData.Type);
-                BaseNodePresenter nodePresenter = CreateNodeAtPosition(nodeData.Position, nodeType);
-                nodePresenter.ID = nodeData.ID;
-
-                // Portları ayarla
-                foreach(var portData in nodeData.Ports)
+                NodeType nodeType = DetermineNodeType(nodeModel.GetType().Name);
+                Vector2 position = new Vector2(nodeModel.PosX, nodeModel.PosY);
+                BaseNodePresenter nodePresenter = CreateNodeAtPosition(position, nodeType);
+                
+                // Node özelliklerini ayarla
+                nodePresenter.ID = nodeModel.ID;
+                nodePresenter.Model.ID = nodeModel.ID;
+                nodePresenter.Model.Title = nodeModel.Title;
+                nodePresenter.Model.Description = nodeModel.Description;
+                nodePresenter.Model.Color = new Color(nodeModel.ColorR, nodeModel.ColorG, nodeModel.ColorB, nodeModel.ColorA);
+                
+                // Node pozisyonunu ayarla (önemli)
+                RectTransform rectTransform = nodePresenter.GetComponent<RectTransform>();
+                if (rectTransform != null)
                 {
-                    var portPresenter = nodePresenter.Ports.FirstOrDefault(p => p.ID == portData.ID);
-                    if (portPresenter != null)
+                    rectTransform.anchoredPosition = position;
+                }
+
+                // Portları ayarla - ID'ye göre eşleştir
+                if (nodeModel.Ports != null && nodeModel.Ports.Count > 0)
+                {
+                    foreach(var portModel in nodeModel.Ports)
                     {
-                        portPresenter.Polarity = (PortPresenter.PolarityType)Enum.Parse(typeof(PortPresenter.PolarityType), portData.Type);
+                        // Önce normal portlarda ara
+                        var portPresenter = nodePresenter.Ports.FirstOrDefault(
+                            p => p.Model.Name == portModel.Name && 
+                            p.Polarity.ToString() == portModel.PolarityTypeString);
+                        
+                        if (portPresenter != null)
+                        {
+                            // Port ID'yi ayarla - bu kritik önemde!
+                            portPresenter.Model.ID = portModel.ID;
+                        }
+                        else
+                        {
+                            // Event port olabilir, event portlarda ara
+                            var eventPortModel = portModel as Models.EventPort;
+                            if (eventPortModel != null)
+                            {
+                                // EventType'a göre eşleştirme yaparak ara
+                                var eventPortPresenter = nodePresenter.EventPorts.FirstOrDefault(
+                                    p => p.EventType.ToString() == eventPortModel.EventType.ToString());
+                                    
+                                if (eventPortPresenter != null)
+                                {
+                                    // Event Port ID'yi ayarla
+                                    eventPortPresenter.Model.ID = portModel.ID;
+                                    Debug.Log($"EventPort eşleştirildi: {portModel.Name}, EventType: {eventPortModel.EventType}");
+                                }
+                                else
+                                {
+                                    Debug.LogWarning($"EventPort bulunamadı! EventType: {eventPortModel.EventType}");
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"Port bulunamadı: {portModel.Name}");
+                            }
+                        }
                     }
                 }
             }
 
             // Bağlantıları oluştur
-            foreach (var connData in graphData.Connections)
+            foreach (var connInfo in saveFile.Connections)
             {
-                var sourcePort = FindPortPresenterByID(connData.SourcePortID);
-                var targetPort = FindPortPresenterByID(connData.TargetPortID);
+                var sourcePort = FindPortPresenterByID(connInfo.SourcePortID);
+                var targetPort = FindPortPresenterByID(connInfo.TargetPortID);
                 if(sourcePort != null && targetPort != null)
                     CreateConnection(sourcePort, targetPort);
             }
+            
+            LoadSceneObjects(saveFile);
 
             UpdateConnectionsLine();
         }
         
-        PortPresenter FindPortPresenterByID(string portID)
+        private NodeType DetermineNodeType(string nodeTypeName)
+        {
+            switch (nodeTypeName)
+            {
+                case "StartNode": return NodeType.Start;
+                case "FinishNode": return NodeType.Finish;
+                case "TouchNode": return NodeType.TouchNode;
+                case "GrabNode": return NodeType.GrabNode;
+                case "WaitForNextNode": return NodeType.WaitForNextNode;
+                case "GetKeyDownNode": return NodeType.LookNode;
+                case "ActionNode": 
+                    // ActionNode.Type özelliğine bakarak gerçek NodeType'ı belirlemek gerekecek
+                    // Varsayılan olarak ChangeMaterialAction döndürelim
+                    return NodeType.ChangeMaterialAction;
+                case "PlaySoundAction": return NodeType.PlaySoundAction;
+                case "ChangeMaterialAction": return NodeType.ChangeMaterialAction;
+                case "MoveObjectAction": return NodeType.ChangePositionAction;
+                case "ToggleObjectAction": return NodeType.ToggleObjectAction;
+                case "PlayAnimationAction": return NodeType.PlayAnimationAction;
+                default: throw new ArgumentException($"Bilinmeyen node tipi: {nodeTypeName}");
+            }
+        }
+        
+        public PortPresenter FindPortPresenterByID(string portID)
         {
             foreach(var node in NodePresenters)
             {
-                var port = node.Ports.FirstOrDefault(p => p.ID == portID);
+                // Normal portları kontrol et
+                var port = node.Ports.FirstOrDefault(p => p.Model.ID == portID);
                 if(port != null) return port;
+                
+                // Event portlarını kontrol et
+                var eventPort = node.EventPorts.FirstOrDefault(p => p.Model.ID == portID);
+                if(eventPort != null) return eventPort;
             }
             return null;
+        }
+
+        public void ScaleUpGraph()
+        {
+            Debug.Log("up");
+            foreach (BaseNodePresenter nodePresenter in _nodePresenters)
+            {
+                contentTransform.localScale += Vector3.one * .1f;
+            }
+            gridImage.pixelsPerUnitMultiplier -= .1f;
+
+
+            
+        }
+        public void ScaleDownGraph()
+        {
+            Debug.Log("Down");
+            foreach (BaseNodePresenter nodePresenter in _nodePresenters)
+            {
+                contentTransform.localScale -= Vector3.one * .1f;
+            }
+            gridImage.pixelsPerUnitMultiplier += .1f;
+
+            
+        }
+
+       
+
+        private void SaveSceneObjects(SaveFile saveFile)
+        {
+            Transform scenarioArea = GameObject.Find("ScenarioArea")?.transform;
+            
+            if (scenarioArea == null)
+            {
+                Debug.LogWarning("ScenarioArea bulunamadı!");
+                return;
+            }
+            
+            foreach (Transform child in scenarioArea)
+            {
+                // Cube ve ObjectSpawnPosition nesnelerini hariç tut
+                if (child.name.StartsWith("Cube") || child.name == "ObjectSpawnPosition")
+                    continue;
+                
+                // Nesnenin tipini belirle
+                ObjectType objectType = DetermineObjectType(child.gameObject);
+                
+                SceneObjectInfo objInfo = new SceneObjectInfo
+                {
+                    ID = System.Guid.NewGuid().ToString(),
+                    Name = child.name,
+                    ObjectType = objectType,
+                    
+                    // Transform bilgileri
+                    PosX = child.position.x,
+                    PosY = child.position.y,
+                    PosZ = child.position.z,
+                    
+                    RotX = child.rotation.eulerAngles.x,
+                    RotY = child.rotation.eulerAngles.y,
+                    RotZ = child.rotation.eulerAngles.z,
+                    
+                    ScaleX = child.localScale.x,
+                    ScaleY = child.localScale.y,
+                    ScaleZ = child.localScale.z
+                };
+                
+                saveFile.SceneObjects.Add(objInfo);
+            }
+        }
+        
+        private ObjectType DetermineObjectType(GameObject obj)
+        {
+            // Nesne adını küçük harfe çevir
+            string objectName = obj.name.ToLower();
+            
+            // Tüm enum değerlerini otomatik olarak kontrol et
+            foreach (ObjectType type in System.Enum.GetValues(typeof(ObjectType)))
+            {
+                // Unknown değerini atla
+                if (type == ObjectType.Unknown)
+                    continue;
+                
+                // Enum adını al ve küçük harfe çevir
+                string enumName = type.ToString().ToLower();
+                
+                // Özel durum kontrolü - BrownDesk ve WhiteDesk için
+                if (type == ObjectType.BrownDesk && objectName.Contains("brown") && objectName.Contains("desk"))
+                    return type;
+                else if (type == ObjectType.WhiteDesk && objectName.Contains("white") && objectName.Contains("desk")) 
+                    return type;
+                // Normal kontrol - enum adı nesne adında geçiyor mu?
+                else if (objectName.Contains(enumName))
+                    return type;
+            }
+            
+            // Eşleşme bulunamadı, uyarı ver
+            Debug.LogWarning($"Bilinmeyen nesne tipi: {obj.name} - Hiçbir ObjectType ile eşleşmiyor.");
+            
+            // Bilinmeyen nesneler için Unknown kullan
+            return ObjectType.Unknown;
+        }
+        
+        private void LoadSceneObjects(SaveFile saveFile)
+        {
+            if (saveFile.SceneObjects == null || saveFile.SceneObjects.Count == 0)
+            {
+                Debug.Log("Yüklenecek 3D nesne yok.");
+                return;
+            }
+                
+            // ScenarioArea'yı bul
+            Transform scenarioArea = GameObject.Find("ScenarioArea")?.transform;
+            
+            if (scenarioArea == null)
+            {
+                Debug.LogWarning("ScenarioArea bulunamadı!");
+                return;
+            }
+            
+            // Mevcut dinamik nesneleri temizle (Cube ve ObjectSpawnPosition hariç)
+            List<Transform> toDestroy = new List<Transform>();
+            foreach (Transform child in scenarioArea)
+            {
+                if (!child.name.StartsWith("Cube") && child.name != "ObjectSpawnPosition")
+                    toDestroy.Add(child);
+            }
+            
+            foreach (var child in toDestroy)
+            {
+                DestroyImmediate(child.gameObject);
+            }
+            
+            // Kaydedilen nesneleri yükle
+            foreach (var objInfo in saveFile.SceneObjects)
+            {
+                // Unknown tipindeki nesneleri atla
+                if (objInfo.ObjectType == ObjectType.Unknown)
+                {
+                    Debug.LogWarning($"Unknown tipindeki nesne yüklenmedi: {objInfo.Name}");
+                    continue;
+                }
+                
+                // ObjectFactory kullanarak nesneyi oluştur
+                if (_objectFactory == null)
+                {
+                    Debug.LogError("ObjectFactory null! Nesne oluşturulamadı.");
+                    continue;
+                }
+                
+                GameObject newObj = _objectFactory.Create(objInfo.ObjectType);
+                
+                if (newObj == null)
+                {
+                    Debug.LogError($"Nesne oluşturulamadı: {objInfo.Name}, Tip: {objInfo.ObjectType}");
+                    continue;
+                }
+                
+                // İsmi ayarla
+                newObj.name = objInfo.Name;
+                
+                // Transform ayarla
+                newObj.transform.position = new Vector3(objInfo.PosX, objInfo.PosY, objInfo.PosZ);
+                newObj.transform.rotation = Quaternion.Euler(objInfo.RotX, objInfo.RotY, objInfo.RotZ);
+                newObj.transform.localScale = new Vector3(objInfo.ScaleX, objInfo.ScaleY, objInfo.ScaleZ);
+                
+                // ScenarioArea'ya parent olarak ayarla
+                newObj.transform.SetParent(scenarioArea);
+                
+                Debug.Log($"3D Nesne yüklendi: {objInfo.Name}, Tip: {objInfo.ObjectType}");
+            }
         }
     }
 }

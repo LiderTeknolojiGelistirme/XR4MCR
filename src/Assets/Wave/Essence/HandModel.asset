@@ -1,3 +1,21 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:49e4829f7162d04247f310119cf8a7682ef4af12cf0fcd96b7a3ad0ec76a0389
-size 640
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b60dfd212d4dc1c4b83ad6b28d708d38, type: 3}
+  m_Name: HandModel
+  m_EditorClassIdentifier: 
+  importedControllerModelPackage: 0
+  importedInputModulePackage: 0
+  importedHandModelPackage: 1
+  importedInteractionModePackage: 0
+  importedTrackerModelPackage: 0
+  importedBodyTrackingPackage: 0
+  importedFacialExpressionMakerPackage: 0

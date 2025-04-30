@@ -4,7 +4,7 @@
             {
                 "type": "Viroo.SceneLoader.ApplicationPublisher.Editor.ApplicationSceneBuilderItemData[], Viroo.SceneLoader.ApplicationPublisher.Editor, Version=2.6.934.0, Culture=neutral, PublicKeyToken=null",
                 "key": "items",
-                "value": "{\"m_Value\":[]}"
+                "value": "{\"m_Value\":[{\"identifier\":\"d063dbed-2f4d-4613-bd15-e3ab0810a476\",\"title\":\"LTGScenario\",\"thumbnail\":{\"instanceID\":0},\"sceneAsset\":{\"fileID\":102900000,\"guid\":\"4f76fb8f3705436438e278130eab7693\",\"type\":3}}]}"
             },
             {
                 "type": "System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",

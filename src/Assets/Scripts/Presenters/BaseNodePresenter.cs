@@ -16,11 +16,13 @@ using System.Linq;
 using Interfaces;
 using Models.Nodes;
 using NodeSystem.Events;
+using NodeSystem;
 using Unity.VisualScripting;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 using IGraphElement = Interfaces.IGraphElement;
 using static Presenters.PortPresenter;
+using Presenters.NodePresenters;
 
 namespace Presenters
 {
@@ -29,19 +31,23 @@ namespace Presenters
         IClickable, IHover
     {
         [SerializeField] private List<PortPresenter> ports = new List<PortPresenter>();
+        [SerializeField] private List<EventPortPresenter> eventPorts = new List<EventPortPresenter>();
+        
         protected ScenarioManager ScenarioManager;
         private BaseNode _model;
         private DiContainer _container;
         private Outline _outline;
+        private Outline _headerOutline;
         private Vector3 _distanceFromPointer;
         private RectTransform _rectTransform;
         private GraphManager _graphManager;
-        private SystemManager _systemManager;
+        protected SystemManager SystemManager;
         private NodeConfig _config;
         private Vector2 _mouseDownPosition;
         private Vector2 _nodeStartPosition;
         private Vector3 _dragOffset;
-        private XRInputManager _XRInputManager;
+        protected XRInputManager XRInputManager;
+        private NotifierCanvas _achievementNotifier;
 
 
         [Inject]
@@ -52,13 +58,15 @@ namespace Presenters
             Debug.Log("ENTER: NodePresenter Construct");
             ScenarioManager = scenarioManager;
             _graphManager = graphManager;
-            _systemManager = systemManager;
+            SystemManager = systemManager;
             _config = config;
             _container = container;
-            _XRInputManager = inputManager;
+            XRInputManager = inputManager;
         }
 
         public IReadOnlyList<PortPresenter> Ports => ports;
+
+        public IReadOnlyList<EventPortPresenter> EventPorts => eventPorts;
 
         public BaseNode Model
         {
@@ -66,7 +74,7 @@ namespace Presenters
             private set => _model = value;
         }
 
-        private void Update()
+        protected virtual void Update()
         {
             if (Model.IsActive && Model.IsStarted && !Model.IsCompleted)
             {
@@ -81,10 +89,23 @@ namespace Presenters
             _outline = GetComponent<Outline>() ?? gameObject.AddComponent<Outline>();
             _outline.effectColor = _config.outlineColor;
             _outline.enabled = false;
-            //SetupUI();
-            //CreatePorts();
-            // Port presenter'ları bul ve initialize et
-            ports = GetComponentsInChildren<PortPresenter>().ToList();
+            
+            // Header GameObject'ini bul
+            Transform headerTransform = transform.Find("Header");
+            if (headerTransform != null)
+            {
+                // Header'a outline ekle
+                _headerOutline = headerTransform.GetComponent<Outline>() ?? headerTransform.gameObject.AddComponent<Outline>();
+                // #79E0EE renk kodunu RGB'ye çevirme (47%, 88%, 93%)
+                _headerOutline.effectColor = new Color(0.47f, 0.88f, 0.93f);
+                _headerOutline.effectDistance = new Vector2(3, -3);
+                _headerOutline.enabled = false;
+            }
+            
+            // Normal portları başlat
+            ports = GetComponentsInChildren<PortPresenter>()
+                .Where(p => !(p is EventPortPresenter))
+                .ToList();
 
             // Her port için model oluştur ve initialize et
             foreach (var portPresenter in ports)
@@ -96,9 +117,27 @@ namespace Presenters
                 // Port presenter'ı initialize et
                 portPresenter.Initialize(portModel);
             }
+            
+            // Event portlarını başlat
+            eventPorts = GetComponentsInChildren<EventPortPresenter>().ToList();
+            for (int i = 0; i < eventPorts.Count; i++)
+            {
+                var eventPort = eventPorts[i];
+                // Event tipi için benzersiz bir isim oluştur (i index kullanarak)
+                string portName = $"EventPort_{eventPort.EventType}_{i}";
+                
+                // Event portu için özel EventPort model oluştur
+                var portModel = new Models.EventPort(
+                    PolarityType.Output, 
+                    portName,
+                    this,
+                    eventPort.EventType); // EventPortPresenter'da tanımlanan EventType değerini kullan
+                
+                // Event port presenter'ı initialize et
+                eventPort.Initialize(portModel);
+            }
 
-            // UI elementlerini ayarla
-            //SetupUI();
+
         }
 
         private void SetupUI()
@@ -192,39 +231,49 @@ namespace Presenters
 
         public void Select()
         {
+            _graphManager.scrollRect.horizontal = false;
+            _graphManager.scrollRect.vertical = false;
             if (!_model.EnableSelect) return;
             _outline.effectColor = _config.selectedColor;
             _outline.enabled = true;
-            if (!_systemManager.selectedElements.Contains(this))
+            if (!SystemManager.selectedElements.Contains(this))
             {
-                _systemManager.selectedElements.Add(this);
-                _systemManager.LTGEvents.TriggerEvent(LTGEventType.OnElementSelected, this);
+                SystemManager.selectedElements.Add(this);
+                SystemManager.LTGEvents.TriggerEvent(LTGEventType.OnElementSelected, this);
             }
         }
 
         public void Unselect()
         {
+            _graphManager.scrollRect.horizontal = true;
+            _graphManager.scrollRect.vertical = true;
             if (!_model.EnableSelect) return;
             _outline.enabled = false;
-            if (_systemManager.selectedElements.Contains(this))
+            if (SystemManager.selectedElements.Contains(this))
             {
-                _systemManager.selectedElements.Remove(this);
-                _systemManager.LTGEvents.TriggerEvent(LTGEventType.OnElementUnselected, this);
+                SystemManager.selectedElements.Remove(this);
+                SystemManager.LTGEvents.TriggerEvent(LTGEventType.OnElementUnselected, this);
             }
         }
 
         private void OnDestroy()
         {
             Unselect();
-            if (_systemManager.clickedElement == this as IElement)
-                _systemManager.clickedElement = null;
+            if (SystemManager.clickedElement == this as IElement)
+                SystemManager.clickedElement = null;
         }
 
         public bool DisableClick { get; }
 
         public void OnPointerDown()
         {
-            if (!_systemManager.selectedElements.Contains(this))
+            // ScrollRect'i sürükleme süresince devre dışı bırak
+            if (_graphManager != null && _graphManager.scrollRect != null)
+            {
+                _graphManager.scrollRect.enabled = false;
+            }
+            
+            if (!SystemManager.selectedElements.Contains(this))
             {
                 Debug.Log("tiklandi");
                 Select();
@@ -233,7 +282,7 @@ namespace Presenters
                 Vector2 localPointerPosition;
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(
                     _graphManager.CanvasRectTransform, 
-                    _XRInputManager.ScreenPointerPosition, 
+                    XRInputManager.ScreenPointerPosition, 
                     Camera.main, 
                     out localPointerPosition);
                 _mouseDownPosition = Input.mousePosition;
@@ -248,12 +297,23 @@ namespace Presenters
 
         public void OnPointerUp()
         {
+            // ScrollRect'i tekrar etkinleştir
+            if (_graphManager != null && _graphManager.scrollRect != null)
+            {
+                _graphManager.scrollRect.enabled = true;
+            }
         }
 
         public bool EnableDrag { get; set; } = true;
 
         public void OnBeginDrag()
         {
+            // ScrollRect'i sürükleme süresince devre dışı bırak
+            if (EnableDrag && _graphManager != null && _graphManager.scrollRect != null)
+            {
+                _graphManager.scrollRect.enabled = false;
+            }
+            
             if (EnableDrag)
             {
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(_graphManager.CanvasRectTransform,
@@ -274,7 +334,11 @@ namespace Presenters
 
         public void OnEndDrag()
         {
-            //if (EnableDrag) Unselect();
+            // ScrollRect'i tekrar etkinleştir
+            if (_graphManager != null && _graphManager.scrollRect != null)
+            {
+                _graphManager.scrollRect.enabled = true;
+            }
         }
 
         public bool EnableHover { get; set; } = true;
@@ -292,7 +356,7 @@ namespace Presenters
         {
             if (EnableHover)
             {
-                if (_systemManager.selectedElements.Contains(this))
+                if (SystemManager.selectedElements.Contains(this))
                 {
                     _outline.effectColor = _config.selectedColor;
                 }
@@ -340,14 +404,24 @@ namespace Presenters
 
         public virtual void Play()
         {
-            Debug.Log("This is base");
+            //Debug.Log("This is base");
         }
 
         public virtual void ActivateNode()
         {
             Model.IsActive = true;
             onActivated.Invoke();
+            
+            // Event portlarını tetikle
+            TriggerEventPorts(NodeSystem.EventTypeEnum.OnActivated);
+            
             ScenarioManager.ActiveNodePresenter = this;
+            
+            // Header outline'ı göster
+            if (_headerOutline != null)
+            {
+                _headerOutline.enabled = true;
+            }
         }
 
         public virtual void StartNode()
@@ -355,12 +429,31 @@ namespace Presenters
             ActivateNode();
             Model.IsStarted = true;
             onStarted.Invoke();
+            
+            // Event portlarını tetikle
+            TriggerEventPorts(NodeSystem.EventTypeEnum.OnStarted);
         }
 
         public virtual void CompleteNode()
         {
             Model.IsCompleted = true;
             onCompleted.Invoke();
+            
+            // Event portlarını tetikle
+            TriggerEventPorts(NodeSystem.EventTypeEnum.OnCompleted);
+            
+            // Header outline'ı gizle
+            if (_headerOutline != null)
+            {
+                _headerOutline.enabled = false;
+            }
+
+            if (this is not StartNodePresenter && this is not FinishNodePresenter)
+            {
+                _achievementNotifier = ScenarioManager.achievementCanvas.GetComponent<NotifierCanvas>();
+                _achievementNotifier.GetComponent<NotifierCanvas>().ApplyToAchievementNotification();
+            }
+
             if (TryToGoNextNode()) return;
             OnLastNodeComplete();
         }
@@ -379,12 +472,25 @@ namespace Presenters
                 {
                     if (portPresenter.ConnectionPresenters.Count > 0)
                     {
-                        if (portPresenter.ConnectionPresenters[0].Model.TargetPort != null)
+                        foreach (ConnectionPresenter connectionPresenter in portPresenter.ConnectionPresenters)
                         {
-                            DeactivateNode();
-                            portPresenter.ConnectionPresenters[0].Model.TargetPort.Model.baseNode.StartNode();
-                            return true;
+                            if (connectionPresenter.Model.TargetPort != null)
+                            {
+                                // Önce bu node'u deaktive et
+                                DeactivateNode();
+                                
+                                // Sonra hedef node'u başlat (bu ScenarioManager.ActiveNodePresenter'ı günceller)
+                                connectionPresenter.Model.TargetPort.Model.baseNode.StartNode();
+                                
+                                // UI'ı güncelle
+                                ScenarioManager.UpdateNodeInfoDisplay();
+                                
+                                return true;
+                            }
                         }
+                        
+                        DeactivateNode();
+                        return true;
                     }
                 }
             }
@@ -402,8 +508,15 @@ namespace Presenters
                     {
                         if (portPresenter.ConnectionPresenters[0].Model.SourcePort != null)
                         {
+                            // Önce bu node'u deaktive et
                             DeactivateNode();
+                            
+                            // Sonra kaynak node'u başlat (bu ScenarioManager.ActiveNodePresenter'ı günceller)
                             portPresenter.ConnectionPresenters[0].Model.SourcePort.Model.baseNode.StartNode();
+                            
+                            // UI'ı güncelle
+                            ScenarioManager.UpdateNodeInfoDisplay();
+                            
                             return true;
                         }
                     }
@@ -417,12 +530,23 @@ namespace Presenters
         {
             Model.IsActive = false;
             Model.IsStarted = false;
+            Model.IsCompleted = false;
             onDeactivated.Invoke();
+            
+            // Event portlarını tetikle
+            TriggerEventPorts(NodeSystem.EventTypeEnum.OnDeactivated);
+            
+            // Header outline'ı gizle
+            if (_headerOutline != null)
+            {
+                _headerOutline.enabled = false;
+            }
         }
 
         public virtual void GoToNextNode()
         {
-            if (TryToGoNextNode()) return;
+            CompleteNode();
+            //if (TryToGoNextNode()) return;
             OnLastNodeComplete();
         }
 
@@ -442,6 +566,18 @@ namespace Presenters
 
         public virtual void OnSkip()
         {
+        }
+
+        // Event portlarını tetikleme metodu
+        private void TriggerEventPorts(NodeSystem.EventTypeEnum eventType)
+        {
+            foreach (var eventPort in eventPorts)
+            {
+                if (eventPort.EventType == eventType)
+                {
+                    eventPort.TriggerEvent();
+                }
+            }
         }
 
         #endregion

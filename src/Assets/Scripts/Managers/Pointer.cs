@@ -6,13 +6,18 @@ using Interfaces;
 using NodeSystem.Events;
 using Zenject;
 using System;
+using Helpers.PortMatchRules;
 using Presenters;
 using UnityEngine.EventSystems;
+using System.Collections;
+using Unity.VisualScripting;
+using NodeSystem;
 
 namespace Managers
 {
     public class Pointer : MonoBehaviour
     {
+        public NoDragScrollRect noDragScrollRect;
         private GraphManager _graphManager;
         private XRInputManager _inputManager;
         private Raycaster _raycaster;
@@ -23,7 +28,6 @@ namespace Managers
         private RectTransform _rectTransform;
         private SystemManager _systemManager;
         private ConnectionPresenter _lastHoveredConnection;
-        public bool IsActive { get; private set; }
         private Color _color;
         [HideInInspector] public Vector3 position;
 
@@ -68,6 +72,7 @@ namespace Managers
 
         public void OnEnable()
         {
+
             _systemManager.AddToUpdate(OnUpdate);
 
             _inputManager.e_OnPointerDown.AddListener(OnPointerDown);
@@ -75,25 +80,62 @@ namespace Managers
             _inputManager.e_OnPointerUp.AddListener(OnPointerUp);
             _inputManager.e_OnDelete.AddListener(OnDeleteKeyPressed);
             _inputManager.e_OnPointerHover.AddListener(OnPointerHover);
+            //_inputManager.e_OnCheckDragCanvas.AddListener(OnActivatePointer);
+
+
         }
+
+        public void OnDisable()
+        {
+
+            _systemManager.RemoveFromUpdate(OnUpdate);
+
+            _inputManager.e_OnPointerDown.RemoveListener(OnPointerDown);
+            _inputManager.e_OnDrag.RemoveListener(OnDrag);
+            _inputManager.e_OnPointerUp.RemoveListener(OnPointerUp);
+            _inputManager.e_OnDelete.RemoveListener(OnDeleteKeyPressed);
+            _inputManager.e_OnPointerHover.RemoveListener(OnPointerHover);
+        }
+
+
+
 
         void OnUpdate()
         {
-            Vector3 newLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
+            if (_inputManager != null)
+            {
+                if (_inputManager.xrRayInteractor != null && _inputManager.xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+                {
+                    if (hit.transform != null && hit.transform.gameObject != null && hit.transform.gameObject.name == "Plane")
+                        Show();
+                    else
+                        Hide();
+                }
+                else
+                {
+                    Debug.Log("xrRayInteractor is null or TryGetCurrent3DRaycastHit failed");
+                }
+            }
+            else
+            {
+                Debug.Log("inputManager is null");
+            }
+
+             Vector3 newLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
             ConnectionPresenter closestConnection = _raycaster.FindClosestConnectionToPosition(newLocalPosition, _graphManager.ConnectionDetectionDistance);
             if (closestConnection != _lastHoveredConnection)
             {
                 // Eski bağlantıdan çıkış event'i tetikle
                 if (_lastHoveredConnection != null)
                 {
-                    Debug.Log($"Hover çıkıldı: {_lastHoveredConnection.Model.ID}");
+                    //Debug.Log($"Hover çıkıldı: {_lastHoveredConnection.Model.ID}");
                     _lastHoveredConnection.OnPointerHoverExit();
                 }
 
                 // Yeni bağlantıya giriş event'i tetikle
                 if (closestConnection != null)
                 {
-                    Debug.Log($"Hover edildi: {closestConnection.Model.ID}");
+                    //Debug.Log($"Hover edildi: {closestConnection.Model.ID}");
                     closestConnection.OnPointerHoverEnter();
                 }
 
@@ -105,58 +147,19 @@ namespace Managers
                 _rectTransform.anchoredPosition = newLocalPosition;
             }
 
-            // Ayrıca Z değerini manuel olarak sıfırlayabilirsin:
+            // Z değerini sıfırla
             _rectTransform.localPosition = new Vector3(_rectTransform.localPosition.x, _rectTransform.localPosition.y, 0);
+
+
+
         }
 
+        //public void ResetPointerPosition()
+        //{
+            
+        //}
 
 
-        public void OnDisable()
-        {
-            _systemManager.RemoveFromUpdate(OnUpdate);
-
-            _inputManager.e_OnPointerDown.RemoveListener(OnPointerDown);
-            _inputManager.e_OnDrag.RemoveListener(OnDrag);
-            _inputManager.e_OnPointerUp.RemoveListener(OnPointerUp);
-            _inputManager.e_OnDelete.RemoveListener(OnDeleteKeyPressed);
-            _inputManager.e_OnPointerHover.RemoveListener(OnPointerHover);
-        }
-
-        public void UpdatePosition(Vector2 mousePosition)
-        {
-            if (_rectTransform == null) return;
-
-            // Mouse pozisyonunu canvas space'e çevir
-            Vector2 pos;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    transform.parent as RectTransform,
-                    mousePosition,
-                    null,
-                    out pos))
-            {
-                _rectTransform.anchoredPosition = pos;
-            }
-        }
-
-        public void SetDefaultIcon() => _pointerImage.sprite = _defaultIcon;
-        public void SetDragIcon() => _pointerImage.sprite = _dragIcon;
-
-        public void Show()
-        {
-            _pointerImage.enabled = true;
-            Cursor.visible = false;
-        }
-
-        public void Hide()
-        {
-            _pointerImage.enabled = false;
-            Cursor.visible = true;
-        }
-
-        public void Deactivate()
-        {
-            IsActive = false;
-        }
 
         public void OnPointerDown()
         {
@@ -170,7 +173,7 @@ namespace Managers
                 closestConnection.OnPointerDown(); // Bağlantının kendi seçme metodunu tetikler
                 _systemManager.clickedElement = closestConnection;
             }
-            
+
             if (_pointerImage != null)
                 _pointerImage.sprite = _dragIcon;
 
@@ -196,6 +199,26 @@ namespace Managers
             }
         }
 
+       
+
+
+        public void SetDefaultIcon() => _pointerImage.sprite = _defaultIcon;
+        public void SetDragIcon() => _pointerImage.sprite = _dragIcon;
+
+        public void Show()
+        {
+            _pointerImage.enabled = true;
+        }
+
+        public void Hide()
+        {
+            _pointerImage.enabled = false;
+
+        }
+
+
+
+
         public void OnDrag(Vector3 _)
         {
             if (_inputManager.xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
@@ -215,10 +238,6 @@ namespace Managers
                 _systemManager.LTGEvents.TriggerEvent(LTGEventType.OnDrag, _systemManager.clickedElement);
             }
         }
-
-
-
-
 
         public void OnPointerUp()
         {
@@ -325,9 +344,17 @@ namespace Managers
                                      portPresenter.Model.baseNode.Model.EnableSelfConnection) ||
                                     portPresenter.Model.baseNode != draggedPort.Model.baseNode)
                                     if (portPresenter.Polarity != draggedPort.Polarity || portPresenter.Polarity ==
-                                        PortPresenter.PolarityType.Bidirectional)
+                                        NodeSystem.PolarityType.Bidirectional)
                                     {
-                                        return portPresenter;
+                                        var matchRule = FindObjectOfType<CustomPortMatchRule>();
+                                        if (matchRule != null && matchRule.ExecuteRule(draggedPort.Model, portPresenter.Model))
+                                        {
+                                            return portPresenter;  // Kural başarılı olduysa burada işlem yapabilirsiniz
+                                        }
+
+                                        return null;
+
+
                                     }
                             }
                         }

@@ -10,6 +10,7 @@ using System.Linq;
 using CustomGraphics;
 using MeadowGames.UINodeConnect4.UICContextMenu;
 using NodeSystem.Events;
+using NodeSystem;
 
 namespace Presenters
 {
@@ -38,7 +39,7 @@ namespace Presenters
         [SerializeField] private Image _portImage;
         private RectTransform _rectTransform;
 
-        [SerializeField] private PolarityType _polarity = PolarityType.Bidirectional;
+        [SerializeField] private NodeSystem.PolarityType _polarity = NodeSystem.PolarityType.Bidirectional;
 
         private PortPresenter _closestFoundPort;
         private PortPresenter _lastFoundPort;
@@ -55,7 +56,7 @@ namespace Presenters
 
         public int Priority => 2;
 
-        public PolarityType Polarity
+        public NodeSystem.PolarityType Polarity
         {
             get => _polarity;
             set
@@ -162,7 +163,7 @@ namespace Presenters
                 SetupControlPoint();
             }
 
-            _defaultColor = Model?.Polarity == PolarityType.Input ? _config.inputPortColor : _config.outputPortColor;
+            _defaultColor = Model?.Polarity == NodeSystem.PolarityType.Input ? _config.inputPortColor : _config.outputPortColor;
             _hoverColor = _config.hoverColor;
             _selectedColor = _config.selectedColor;
 
@@ -244,7 +245,7 @@ namespace Presenters
                 // Başlangıç portunun canvas'a göre local pozisyonunu Vector2 olarak al:
                 Vector2 startPortLocalPosition = _graphManager.CanvasRectTransform.InverseTransformPoint(Model.image.transform.position);
         
-                // XR controller’dan gelen pointer pozisyonunu canvas local olarak al (Vector3 → Vector2 dönüşümü yap):
+                // XR controller'dan gelen pointer pozisyonunu canvas local olarak al (Vector3 → Vector2 dönüşümü yap):
                 Vector2 pointerLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
 
                 // Line için noktaları hazırla (başlangıç portu → VR pointer pozisyonu):
@@ -282,16 +283,31 @@ namespace Presenters
         {
             if (DisableClick) return;
 
+            // ScrollRect'i sürükleme süresince devre dışı bırak
+            if (_graphManager != null && _graphManager.scrollRect != null)
+            {
+                _graphManager.scrollRect.enabled = false;
+            }
+
             _isSelected = true;
             color = _selectedColor;
             UpdateVisuals();
             _graphManager.LineRenderer.OnPopulateMeshAddListener(DrawOnDragConnectionLine);
             _systemManager.LTGEvents.TriggerEvent(LTGEventType.OnPointerDown, this);
+            
+            // Log: Porta tıklandı
+            LogManager.Log($"Port clicked: {ID} ({Polarity})", Color.cyan);
         }
 
         public void OnPointerUp()
         {
             if (DisableClick) return;
+
+            // ScrollRect'i tekrar etkinleştir
+            if (_graphManager != null && _graphManager.scrollRect != null)
+            {
+                _graphManager.scrollRect.enabled = true;
+            }
 
             Debug.Log($"PortPresenter.OnPointerUp çağrıldı: {ID}");
 
@@ -303,8 +319,17 @@ namespace Presenters
             if (_systemManager.clickedElement is PortPresenter sourcePort && sourcePort != this)
             {
                 Debug.Log($"Bağlantı oluşturuluyor: {sourcePort.ID} → {this.ID}");
+                
+                // Log: Bağlantı oluşturma girişimi
+                LogManager.LogInteraction($"Attempting connection: {sourcePort.ID} ({sourcePort.Polarity}) → {ID} ({Polarity})");
+                
                 sourcePort.ConnectTo(this);
                 _graphManager.UpdateConnectionsLine();
+            }
+            else
+            {
+                // Log: Port serbest bırakıldı, bağlantı oluşturulmadı
+                LogManager.Log($"Port released: {ID} (no connection made)", new Color(0.7f, 0.7f, 0.7f));
             }
         }
         
@@ -312,6 +337,12 @@ namespace Presenters
         {
             if (IsXRRayHittingThisPort())
             {
+                // ScrollRect'i sürükleme süresince devre dışı bırak (XR için)
+                if (_graphManager != null && _graphManager.scrollRect != null)
+                {
+                    _graphManager.scrollRect.enabled = false;
+                }
+
                 Debug.Log("PortPresenter XR Pointer Down!");
                 OnPointerDown();
                 _isDragging = true;
@@ -348,6 +379,12 @@ namespace Presenters
 
         void OnXRPointerUp()
         {
+            // ScrollRect'i tekrar etkinleştir (XR için)
+            if (_graphManager != null && _graphManager.scrollRect != null)
+            {
+                _graphManager.scrollRect.enabled = true;
+            }
+
             if (_isDragging)
             {
                 OnPointerUp();
@@ -365,10 +402,16 @@ namespace Presenters
             {
                 Debug.Log($"Bağlantı yaratıldı: {this.ID} -> {closestFoundPort.ID}");
                 _graphManager.UpdateConnectionsLine();
+                
+                // Log: Bağlantı başarıyla oluşturuldu
+                LogManager.LogSuccess($"Connection successful: {this.ID} -> {closestFoundPort.ID}");
             }
             else
             {
                 Debug.LogError("GraphManager.CreateConnection null döndürdü!");
+                
+                // Log: Bağlantı oluşturulamadı
+                LogManager.LogError($"Connection failed between: {this.ID} and {closestFoundPort.ID}");
             }
 
             return connection;
@@ -439,7 +482,7 @@ namespace Presenters
                 controlPoint.transform.SetParent(transform);
                 ((RectTransform)controlPoint.transform).sizeDelta = Vector2.zero;
                 Model.ControlPoint = controlPoint;
-                SetControlPointDistanceAngle(50, 180);
+                SetControlPointDistanceAngle(50, 0);
                 Debug.Log("Yeni control point oluşturuldu: " + controlPoint.transform.position + " for port: " +
                           transform.name);
             }
@@ -455,13 +498,9 @@ namespace Presenters
 
         #region Types
 
-        public enum PolarityType
-        {
-            Input,
-            Output,
-            Bidirectional
-        }
-
+        // PolarityType enum'u artık ayrı bir dosyada tanımlandı
+        // Buradaki enum tanımını kaldırıyoruz
+        
         #endregion
     }
 }
