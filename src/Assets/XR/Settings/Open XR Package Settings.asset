@@ -976,6 +976,7 @@ MonoBehaviour:
   m_Name: MeshingTeapotFeature Metro
   m_EditorClassIdentifier: 
   m_enabled: 0
+  <failedInitialization>k__BackingField: 0
   nameUi: Meshing Subsystem
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.example.meshing
@@ -1212,6 +1213,7 @@ MonoBehaviour:
   m_Name: MeshingTeapotFeature Android
   m_EditorClassIdentifier: 
   m_enabled: 0
+  <failedInitialization>k__BackingField: 0
   nameUi: Meshing Subsystem
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.example.meshing
@@ -1939,7 +1941,6 @@ MonoBehaviour:
   - {fileID: -7737504520195983905}
   - {fileID: -2115413272932221942}
   - {fileID: -6646765099518563911}
-  - {fileID: -2523244897672162647}
   - {fileID: 2496823992863931222}
   - {fileID: -2323011986181064833}
   - {fileID: 3564164241072069038}
@@ -2427,7 +2428,6 @@ MonoBehaviour:
   - {fileID: 7389372277195531354}
   - {fileID: 7206220707609042794}
   - {fileID: -3026831318810127281}
-  - {fileID: -1558918361396041609}
   - {fileID: -9185346951168778480}
   - {fileID: 2857176365719606498}
   - {fileID: 137236693559865640}
@@ -2605,7 +2605,6 @@ MonoBehaviour:
   - {fileID: 2753388193243739527}
   - {fileID: 1464787460376558087}
   - {fileID: -1907115929035506842}
-  - {fileID: 7915086752856769842}
   - {fileID: 3415327340954783116}
   - {fileID: 6888676581260561348}
   - {fileID: 1481525305866438941}
@@ -2863,6 +2862,7 @@ MonoBehaviour:
   m_Name: MeshingTeapotFeature Standalone
   m_EditorClassIdentifier: 
   m_enabled: 0
+  <failedInitialization>k__BackingField: 0
   nameUi: Meshing Subsystem
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.example.meshing

@@ -73,6 +73,7 @@ public class NodeConfig : ScriptableObject
     public GameObject nightstandPrefab;
     public GameObject whitedeskPrefab;
     public GameObject yellowlinePrefab;
+    
 
     [Header("CanvasPrefabs")]
     public GameObject achievementCanvas;

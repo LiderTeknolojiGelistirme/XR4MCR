@@ -13,6 +13,7 @@ namespace Helpers
     public class InteractionHelper : MonoBehaviour, ISelectable
     {
         [Inject] SystemManager _systemManager;
+        public GameObject targetGhostPrefab;
         private XRBaseInteractable _xrBaseInteractable;
         private Outline _outline;
         public bool EnableSelect { get; set; }
