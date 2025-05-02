@@ -29,7 +29,7 @@ XR4MCR provides a training environment where multiple users can simultaneously i
 git clone https://github.com/LiderTeknolojiGelistirme/XR4MCR.git
 ```
 
-2. Open the project in Unity (2021.3 or later recommended)
+2. Open the project in Unity (2022.3.40 or later recommended)
 
 3. Install required packages through Unity Package Manager:
    - XR Interaction Toolkit
