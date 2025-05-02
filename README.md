@@ -65,7 +65,7 @@ Note: Some large files exceeding GitHub's size limits have been excluded from th
 
 ## Requirements
 
-- Unity 2021.3 or later
+- Unity 2022.3.40 (tested) or later
 - Compatible VR headset or MR device
 - OpenXR-compatible runtime
 - Windows 10 or later
