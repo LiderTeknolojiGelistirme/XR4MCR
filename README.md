@@ -54,7 +54,7 @@ When working with this repository, please ensure you have Git LFS installed:
 git lfs install
 ```
 
-Note: Some large files exceeding GitHub's size limits have been excluded from the repository. These include certain source files in the SCI-FI UI Pack Pro folders.
+Note: Some large files exceeding GitHub's size limits have been excluded from the repository.
 
 ## Usage
 
