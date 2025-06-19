@@ -14,6 +14,9 @@ XR4MCR provides a training environment where multiple users can simultaneously i
 - Performance monitoring and evaluation
 - Cross-platform compatibility (VR headsets and MR devices)
 
+![Resim1](https://github.com/user-attachments/assets/3778fb0d-28f1-40c6-b670-c2169c814443)
+![Resim2](https://github.com/user-attachments/assets/af652ebe-8a8e-4eca-aaee-aaa40bc7f836)
+
 ## Technical Features
 
 - Built with Unity Engine
