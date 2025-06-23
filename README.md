@@ -178,7 +178,7 @@ The XR4MCR system is a comprehensive mixed reality training platform designed fo
 
 ![image](https://github.com/user-attachments/assets/86559b1e-224d-4b90-92de-52690f1267b3)
 
-Figure 3.1: XR4MCR Application Screenshot
+Figure 0: XR4MCR Application Screenshot
 
 ## System Architecture Overview
 
@@ -193,7 +193,7 @@ XR4MCR is built on a modular architecture that combines:
 
 ### Software Components
 
-- **Unity Engine (2022.3.40f LTS)**: The development platform with URP (Universal Render Pipeline) optimization for XR performance.
+- **Unity Engine (2022.3.40f LTS)**: The development platform.
 - **MVP Architecture**: Implemented across three distinct layers:
   - Model Layer: Data structures and business logic in pure C# classes
   - View Layer: Unity UI components and prefabs for visualization
@@ -293,7 +293,7 @@ The Presenter layer manages the communication between the Model and the View. Th
 
 The basic principles applied in the architectural design of the XR4MCR and their application in the project are detailed in the table below:
 
-TABLE 5.1: XR4MCR Design Principles and Practices
+Table 1: XR4MCR Design Principles and Practices
 
 | Design Principle | Application in XR4MCR | Example |
 | --- | --- | --- |
@@ -351,7 +351,7 @@ XR4MCR is built on the Unity game engine. The main reasons for choosing Unity ar
 
 ##### Unity Version and Configuration
 
-TABLE 5.2: Unity Configuration
+Table 2: Unity Configuration
 
 | **Component** | **Version/Detail** | **Purpose** |
 | --- | --- | --- |
@@ -362,7 +362,7 @@ TABLE 5.2: Unity Configuration
 
 ##### Basic Unity Packages
 
-TABLE 5.3: Basic Unity Packages Used
+Table 3: Basic Unity Packages Used
 
 | **Package Name** | **Version** |
 | --- | --- |
@@ -574,7 +574,7 @@ Figure 6: XML Serialization Example
 
 The technologies selected for the XR4MCR project are optimized to support multi-user mixed reality training scenarios. The following table summarizes the contributions of the selected technologies to the project:
 
-TABLE 5.4: Evaluation of Technology Choices
+Table 4: Evaluation of Technology Choices
 
 | **Technology** | **Contribution to the Project** | **Advantage Over Alternative** |
 | --- | --- | --- |
@@ -1025,7 +1025,7 @@ Figure 16: Zenject Installer Configuration
 
 #### Zenject Key Components in XR4MCR
 
-TABLE 5.5: Zenject Component Types in XR4MCR
+Table 5: Zenject Component Types in XR4MCR
 
 | **Component Type** | **Explanation** | **Examples** |
 | --- | --- | --- |
@@ -1044,7 +1044,7 @@ Figure 17: Dependency Injection Methods
 
 ####  Zenject's Benefits to XR4MCR
 
-TABLE 5.6: Zenject's Benefits to the XR4MCR Project
+Table 6: Zenject's Benefits to the XR4MCR Project
 
 | **Advantage** | **Explanation** | **Impact on XR4MCR** |
 | --- | --- | --- |
@@ -1077,7 +1077,7 @@ Figure 19: Zenject Integration Process
 
 In Zenject, the scopes of objects determine their lifecycle:
 
-TABLE 5.7: Zenject Scopes and Their Applications in XR4MCR
+Table 7: Zenject Scopes and Their Applications in XR4MCR
 
 | Scope | Explanation | Usage on XR4MCR |
 | --- | --- | --- |
@@ -1131,7 +1131,7 @@ Figure 22: Node Types
 
 It is the base class for all node types and includes the following properties:
 
-TABLE 5.8:  BaseNode Features and Methods
+Table 8:  BaseNode Features and Methods
 
 | Feature/Method | Explanation |
 | --- | --- |
@@ -1152,7 +1152,7 @@ TABLE 5.8:  BaseNode Features and Methods
 
 XR4MCR provides a variety of node types to support different training scenario steps:
 
-TABLE 5.9: XR4MCR Node Types and Features
+Table 9: XR4MCR Node Types and Features
 
 | Node Tipi | Function | Special Features |
 | --- | --- | --- |
@@ -1182,7 +1182,7 @@ Figure 23: Port and Connection System
 
 In XR4MCR, the port system is based on the concept of polarity:
 
-TABLE 5.10: Port Polarity Types
+Table 10: Port Polarity Types
 
 | **Polarity Types** | **Explanation** | **Connection Rules** |
 | --- | --- | --- |
@@ -1213,7 +1213,7 @@ Figure 25: Event System Structure
 
 The main event types used in the node system in XR4MCR are:
 
-TABLE 5.11: Node Event Types
+Table 11: Node Event Types
 
 | **Event Tipi** | **Triggered Time** | **Purpose** |
 | --- | --- | --- |
@@ -1235,7 +1235,7 @@ Figure 27: Creating Nodes with Factory Pattern
 
 #### How NodePresenterFactory Works
 
-TABLE 5.12:  NodePresenterFactory Process Steps
+Table 12:  NodePresenterFactory Process Steps
 
 | **No** | **Process Step** | **Explanation** |
 | --- | --- | --- |
@@ -1263,7 +1263,7 @@ The XR4MCR project features three main canvas systems that are specifically desi
 
 The XR4MCR's UI systems are specifically designed to streamline the process of creating training scenarios in a mixed reality environment.
 
-TABLE 5.13: Advantages of UI Systems
+Table 13: Advantages of UI Systems
 
 | **Advantage** | **Explanation** | **Result** |
 | --- | --- | --- |
@@ -1284,7 +1284,7 @@ The editor canvas is the core user interface of XR4MCR, enabling the creation an
 
 Figure 30: Node Editor Canvas
 
-TABLE 5.14: Main Components of the Editor's Canvas
+Table 14: Main Components of the Editor's Canvas
 
 | **Component** | **Function** | **User Interaction** |
 | --- | --- | --- |
@@ -1322,7 +1322,7 @@ Object Loading Canvas Features
 
 The Object Loading Canvas has a special rendering system that allows previews of 3D models. When the user selects an object, it can be previewed before it is transferred to the editing area, enabling the user to make more informed decisions when choosing.
 
-TABLE 5.15: Object Loading Canvas Components
+Table 15: Object Loading Canvas Components
 
 | Component | Function | Interaction Model |
 | --- | --- | --- |
@@ -1352,7 +1352,7 @@ The Information Canvas is the interface that provides the user with information 
 
 Figure 34: Information Canvas
 
-TABLE 5.16: Information Canvas Content
+Table 16: Information Canvas Content
 
 | **Content** | **Explanation** | **Update Trigger** |
 | --- | --- | --- |
@@ -1381,7 +1381,7 @@ The Scenario Playback Area is the central area where the visual and interactive 
 2. Associating logical flows in the node system with physical objects
 3. Creating the visual composition of the training scenario
 
-TABLE 5.17: Key Components of the Scenario Playback Area
+Table 17: Key Components of the Scenario Playback Area
 
 | **Component** | **Function** |
 | --- | --- |
@@ -1408,7 +1408,7 @@ One of the most important functions of the Scenario Playback Area is the connect
 
 Figure 38: Object-Node Linking Model
 
-TABLE 5.18: Object-Node Linking Types
+Table 18: Object-Node Linking Types
 
 | **Attribution Type** | **Explanation** | **Sample Application** |
 | --- | --- | --- |
@@ -1421,7 +1421,7 @@ TABLE 5.18: Object-Node Linking Types
 
 In the Scenario Playback Area, users can use different forms of interaction during the training design and testing phases. These interactions are designed to provide a natural and intuitive experience.
 
-TABLE 5.19: Scenario Playback Area Interaction Methods
+Table 19: Scenario Playback Area Interaction Methods
 
 | **Interaction Type** | **Explanation** | **Usage Area** |
 | --- | --- | --- |
@@ -1438,7 +1438,7 @@ Figure 39: Scenario Playback Area User Interaction Cycle
 
 In the XR4MCR application, the canvases are positioned to provide an optimal working experience in the user's mixed reality environment. The spatial organization of the canvases is designed to support the user's workflow.
 
-TABLE 5.20: Canvas Positioning Strategy
+Table 20: Canvas Positioning Strategy
 
 | **Canvas** | **Spatial Position** | **Purpose** |
 | --- | --- | --- |
@@ -1461,7 +1461,7 @@ The XR4MCR project features a modular architecture that integrates XR technologi
 
 XR4MCR's interaction systems are key components that enable users to create and run scenarios in a mixed reality environment. These systems have been implemented with customized layers built on top of the Unity XR Interaction Toolkit.
 
-TABLE 5.21: XR4MCR Interaction System Components
+Table 21: XR4MCR Interaction System Components
 
 | **Component** | **Responsibility** | **Architectural Layer** |
 | --- | --- | --- |
@@ -1480,7 +1480,7 @@ Figure 41: XR Interaction System Architecture
 
 XRInputManager processes raw inputs from physical XR controllers, providing a standardized interface to other components of the application. This component abstracts the input differences between different XR devices, providing a device-independent interaction system.
 
-TABLE 5.22: Types of Interactions Handled by XRInputManager
+Table 22: Types of Interactions Handled by XRInputManager
 
 | **Interaction Type** | **Usage Area** | **Example Scenario** |
 | --- | --- | --- |
@@ -1493,7 +1493,7 @@ TABLE 5.22: Types of Interactions Handled by XRInputManager
 
 The XR4MCR project delivers a mixed reality experience using Unity's XR infrastructure. This integration enables virtual content to interact with the real world.
 
-TABLE 5.23: Mixed Reality Integration Components
+Table 23: Mixed Reality Integration Components
 
 | **Component** | **Function** | **Technical Approach** |
 | --- | --- | --- |
@@ -1511,7 +1511,7 @@ In XR4MCR, transformation systems are a special architectural component that all
 
 Figure 43: Transformation Systems
 
-TABLE 5.24: Transformation System Components
+Table 24: Transformation System Components
 
 | **Component** | **Role** | **Architectural Layer** |
 | --- | --- | --- |
@@ -1527,7 +1527,7 @@ Figure 44: Transformation System Architecture
 
 The XR4MCR uses special transformation systems for the manipulation of 3D objects. These systems enable the user to move, rotate, and scale objects in an intuitive way.
 
-TABLE 5.25: Transformation Systems and Functions
+Table 25: Transformation Systems and Functions
 
 | Transcription | Function | Control Mechanism |
 | --- | --- | --- |
@@ -1572,7 +1572,7 @@ The VIROO Studio SDK provides the following key components within the Unity proj
 
 The XR4MCR project uses the VIROO Studio SDK during the development phase, ensuring that the application works in harmony with the VIROO ecosystem. This integration affects the project development workflow as follows:
 
-TABLE 5.26: Integration Steps
+Table 26: Integration Steps
 
 | **#** | **Step** | **Explanation** |
 | --- | --- | --- |
@@ -1748,7 +1748,7 @@ This integrated approach ensures that both the logical flow and the visual arran
 
 &lt;/SaveFile&gt;
 ```
-TABLE 5.27: Integrated Scenario Data Types
+Table 27: Integrated Scenario Data Types
 
 | **Data type** | **XML Elements** | **Serialized Features** |
 | --- | --- | --- |
