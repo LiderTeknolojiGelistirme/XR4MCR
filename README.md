@@ -429,7 +429,7 @@ public class MR_Passthrough : MonoBehaviour
 
      // Get the XR camera
 
-     \_xrCamera = GetComponent&lt;Camera&gt;();
+     \_xrCamera = GetComponentCamera();
 
 
 
@@ -461,11 +461,11 @@ public class MR_Passthrough : MonoBehaviour
 
      // Set renderings for the background camera
 
-     if (\_xrCamera.GetComponent&lt;UniversalAdditionalCameraData&gt;() != null)
+     if (\_xrCamera.GetComponentUniversalAdditionalCameraData() != null)
 
      {
 
-         var cameraData = \_xrCamera.GetComponent&lt;UniversalAdditionalCameraData&gt;();
+         var cameraData = \_xrCamera.GetComponentUniversalAdditionalCameraData();
 
          cameraData.renderPostProcessing = true;
 
@@ -676,13 +676,13 @@ public class NodePresenter
 
  // XML documentation comments
 
- /// &lt;summary&gt;
+ /// summary
 
  /// Activates the node and triggers related events.
 
- /// &lt;/summary&gt;
+ /// /summary
 
- /// &lt;param name="silently"&gt;Set to true to activate without triggering events&lt;/param&gt;
+ /// param name="silently"Set to true to activate without triggering events/param
 
  public void ActivateNode(bool silently = false)
 
@@ -1650,116 +1650,116 @@ This integrated approach ensures that both the logical flow and the visual arran
 
 **XML Scenario Structure**
 ```
-&lt;SaveFile&gt;
+SaveFile
 
- &lt;Nodes&gt;
+ Nodes
 
- &lt;Node Type="StartNode" ID="node1" Title="Start" PosX="100" PosY="150"&gt;
+ Node Type="StartNode" ID="node1" Title="Start" PosX="100" PosY="150"
 
-   &lt;Ports&gt;
+   Ports
 
-     &lt;Port ID="port1" Type="Output" /&gt;
+     Port ID="port1" Type="Output" /
 
-   &lt;/Ports&gt;
+   /Ports
 
- &lt;/Node&gt;
+ /Node
 
- &lt;Node Type="ActionNode" ID="node2" Title="Robot Arm Movement" PosX="300" PosY="150"&gt;
+ Node Type="ActionNode" ID="node2" Title="Robot Arm Movement" PosX="300" PosY="150"
 
-   &lt;Parameter Name="TargetObject" Value="obj1" /&gt;
+   Parameter Name="TargetObject" Value="obj1" /
 
-   &lt;Parameter Name="TargetPosition" Value="10,15,20" /&gt;
+   Parameter Name="TargetPosition" Value="10,15,20" /
 
-   &lt;Ports&gt;
+   Ports
 
-     &lt;Port ID="port2" Type="Input" /&gt;
+     Port ID="port2" Type="Input" /
 
-     &lt;Port ID="port3" Type="Output" /&gt;
+     Port ID="port3" Type="Output" /
 
-   &lt;/Ports&gt;
+   /Ports
 
- &lt;/Node&gt;
+ /Node
 
- &lt;Node Type="FinishNode" ID="node3" Title="Finish" PosX="500" PosY="150"&gt;
+ Node Type="FinishNode" ID="node3" Title="Finish" PosX="500" PosY="150"
 
-   &lt;Ports&gt;
+   Ports
 
-     &lt;Port ID="port4" Type="Input" /&gt;
+     Port ID="port4" Type="Input" /
 
-   &lt;/Ports&gt;
+   /Ports
 
- &lt;/Node&gt;
+ /Node
 
- &lt;/Nodes&gt;
-
-
-
- &lt;Connections&gt;
-
- &lt;Connection SourcePortID="port1" TargetPortID="port2" /&gt;
-
- &lt;Connection SourcePortID="port3" TargetPortID="port4" /&gt;
-
- &lt;/Connections&gt;
+ /Nodes
 
 
 
- &lt;SceneObjects&gt;
+ Connections
 
- &lt;Object ID="obj1" Type="Model" ResourcePath="models/robot_arm.fbx"&gt;
+ Connection SourcePortID="port1" TargetPortID="port2" /
 
-   &lt;Transform Position="1.5,0,2.3" Rotation="0,90,0" Scale="1,1,1" /&gt;
+ Connection SourcePortID="port3" TargetPortID="port4" /
 
-   &lt;Properties&gt;
-
-     &lt;Property Name="Interactable" Value="true" /&gt;
-
-     &lt;Property Name="CollisionType" Value="mesh" /&gt;
-
-   &lt;/Properties&gt;
-
- &lt;/Object&gt;
-
- &lt;Object ID="obj2" Type="Light" ResourcePath=""&gt;
-
-   &lt;Transform Position="3,5,2" Rotation="45,0,0" Scale="1,1,1" /&gt;
-
-   &lt;Properties&gt;
-
-     &lt;Property Name="LightType" Value="Point" /&gt;
-
-     &lt;Property Name="Intensity" Value="2.5" /&gt;
-
-     &lt;Property Name="Color" Value="255,255,200" /&gt;
-
-   &lt;/Properties&gt;
-
- &lt;/Object&gt;
-
- &lt;/SceneObjects&gt;
+ /Connections
 
 
 
- &lt;NodeObjectLinks&gt;
+ SceneObjects
 
- &lt;Link NodeID="node2" ObjectID="obj1" LinkType="Target" /&gt;
+ Object ID="obj1" Type="Model" ResourcePath="models/robot_arm.fbx"
 
- &lt;/NodeObjectLinks&gt;
+   Transform Position="1.5,0,2.3" Rotation="0,90,0" Scale="1,1,1" /
 
-&lt;/SaveFile&gt;
+   Properties
+
+     Property Name="Interactable" Value="true" /
+
+     Property Name="CollisionType" Value="mesh" /
+
+   /Properties
+
+ /Object
+
+ Object ID="obj2" Type="Light" ResourcePath=""
+
+   Transform Position="3,5,2" Rotation="45,0,0" Scale="1,1,1" /
+
+   Properties
+
+     Property Name="LightType" Value="Point" /
+
+     Property Name="Intensity" Value="2.5" /
+
+     Property Name="Color" Value="255,255,200" /
+
+   /Properties
+
+ /Object
+
+ /SceneObjects
+
+
+
+ NodeObjectLinks
+
+ Link NodeID="node2" ObjectID="obj1" LinkType="Target" /
+
+ /NodeObjectLinks
+
+/SaveFile
 ```
 Table 27: Integrated Scenario Data Types
 
 | **Data type** | **XML Elements** | **Serialized Features** |
 | --- | --- | --- |
-| Nodes | \\&lt;Nodes&gt; | Type, ID, Title, Location, Custom Parameters |
-| Ports | \\&lt;Ports&gt; | ID, Tip (Input/Output/Event) |
-| Connections | \\&lt;Connections&gt; | SourcePortID, TargetPortID |
-| SceneObjects | \\&lt;SceneObjects&gt; | Collection of 3D objects |
-| Object | \\&lt;Object&gt; | ID, Type, Source Path |
-| Transform | \\&lt;Transform&gt; | Position, Turn, Scale |
-| Properties | \\&lt;Properties&gt; | Object-specific properties |
-| NodeObjectLinks | \\&lt;NodeObjectLinks&gt; | Node-Object relationships |
+| Nodes | \\Nodes | Type, ID, Title, Location, Custom Parameters |
+| Ports | \\Ports | ID, Tip (Input/Output/Event) |
+| Connections | \\Connections | SourcePortID, TargetPortID |
+| SceneObjects | \\SceneObjects | Collection of 3D objects |
+| Object | \\Object | ID, Type, Source Path |
+| Transform | \\Transform | Position, Turn, Scale |
+| Properties | \\Properties | Object-specific properties |
+| NodeObjectLinks | \\NodeObjectLinks | Node-Object relationships |
 
 **Advantages of Integrated Serialization**
 
