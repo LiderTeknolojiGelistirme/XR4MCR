@@ -659,6 +659,11 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: 76
       objectReference: {fileID: 0}
+    - target: {fileID: 4012665462842887341, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -94.899994
+      objectReference: {fileID: 0}
     - target: {fileID: 4748286192969522134, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -767,12 +772,37 @@ PrefabInstance:
     - target: {fileID: 6781746159012251434, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -180
+      value: -191.2
       objectReference: {fileID: 0}
     - target: {fileID: 6918409585039522229, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
       propertyPath: m_text
       value: Look Node
+      objectReference: {fileID: 0}
+    - target: {fileID: 7290297754804625236, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 7595803957768893553}
+    - target: {fileID: 7290297754804625236, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnClickInputField
+      objectReference: {fileID: 0}
+    - target: {fileID: 7290297754804625236, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Presenters.BaseNodePresenter, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7290297754804625236, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 8115597250989665199, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -92.9
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1647501749135763968, guid: 7398c762882dbaf4c8605d7693789579, type: 3}
@@ -791,6 +821,18 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 7595803957768893553}
+    - targetCorrespondingSourceObject: {fileID: 2077532772004973028, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -2942126130893450021}
+    - targetCorrespondingSourceObject: {fileID: 2077532772004973028, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8267219293203736342}
+    - targetCorrespondingSourceObject: {fileID: 2077532772004973028, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1607792352410067820}
   m_SourcePrefab: {fileID: 100100000, guid: 7398c762882dbaf4c8605d7693789579, type: 3}
 --- !u!4 &2655732517364400552 stripped
 Transform:
@@ -798,6 +840,18 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 8846921882184582786}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4415386549753981472 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5152133609324391586, guid: 7398c762882dbaf4c8605d7693789579,
+    type: 3}
+  m_PrefabInstance: {fileID: 8846921882184582786}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2317ceab4d3d38419fe16eebc1c0cd3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7355070440024887142 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2077532772004973028, guid: 7398c762882dbaf4c8605d7693789579,
@@ -818,22 +872,69 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ports: []
   eventPorts: []
-  onActivated:
-    m_PersistentCalls:
-      m_Calls: []
+  keyboardDisplay: {fileID: 4415386549753981472}
   onStarted:
     m_PersistentCalls:
       m_Calls: []
   onCompleted:
     m_PersistentCalls:
       m_Calls: []
-  onDeactivated:
+  onSkip:
     m_PersistentCalls:
       m_Calls: []
-  lookObject: {fileID: 0}
-  lookDistance: 3
-  lookDuration: 3
   lookProgressCanvasPrefab: {fileID: 2833867821804846886, guid: 7504d6678c57c014291f9d798e559dcb,
     type: 3}
   selectObjectButton: {fileID: 5900951550472105682}
+  selectChildObjectButton: {fileID: 0}
   inputField: {fileID: 697790025491999165}
+  lookDistanceField: {fileID: 0}
+  lookDurationField: {fileID: 0}
+--- !u!114 &-2942126130893450021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7355070440024887142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 849dafdcc81e41c47a938a4534a2366a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  objectId: 
+  authority: 0
+--- !u!114 &-8267219293203736342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7355070440024887142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b6b9639fa6485f45b29c2750fe6510c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shouldSynchronize: 1
+  updateInterval: 0.1
+  minDistance: 0.05
+  minAngle: 1
+  minScale: 0.01
+  local: 0
+  smoothPositionTime: 0.2
+  smoothRotationTime: 0.2
+--- !u!114 &1607792352410067820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7355070440024887142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3710ee81f0127f34ba7f4f443432fb40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  behaviourId: 
+  persistType: 0
+  updateType: 0

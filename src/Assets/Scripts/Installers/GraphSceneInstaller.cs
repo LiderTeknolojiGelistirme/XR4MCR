@@ -6,7 +6,10 @@ using NodeSystem.Events;
 using CustomGraphics;
 using Enums;
 using Factories;
+using Models;
 using RuntimeGizmos;
+using UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard;
+using UI;
 
 public class GraphSceneInstaller : MonoInstaller
 {
@@ -42,7 +45,18 @@ public class GraphSceneInstaller : MonoInstaller
         Container.Bind<ScenarioManager>()
             .FromComponentInHierarchy()
             .AsSingle();
+
+        Container.Bind<ScenarioFileManager>()
+            .FromComponentInHierarchy()
+            .AsSingle();
         
+        // TransformGizmo
+
+        Container.Bind<TransformGizmo>().AsSingle();
+        
+        // XR Keyboard
+
+        Container.Bind<XRKeyboard>().FromComponentInHierarchy().AsSingle();
 
         // UI Manager
         Container.Bind<UIManager>()
@@ -64,12 +78,19 @@ public class GraphSceneInstaller : MonoInstaller
         Container.Bind<LTGLineRenderer>()
             .FromComponentInHierarchy()
             .AsSingle();
+            
+        // ZenjectInjector'ı hierarşideki tüm ZenjectInjector bileşenlerine bağla
+        Container.Bind<ZenjectInjector>()
+            .FromComponentInHierarchy()
+            .AsSingle();
 
         // Factories
-        Container.BindFactory<Vector2, NodeType, BaseNodePresenter, NodePresenterFactory>()
+        Container.BindFactory<Vector2, NodeType,BaseNode, BaseNodePresenter, NodePresenterFactory>()
             .FromFactory<NodePresenterFactory>();
 
-        Container.BindFactory<ConnectionPresenter, ConnectionPresenterFactory>()
+        // ConnectionPresenterFactory MonoBehaviour olarak bind et
+        Container.Bind<ConnectionPresenterFactory>()
+            .FromComponentInHierarchy()
             .AsSingle();
 
         // Object Factory - 3D nesneleri oluşturmak için

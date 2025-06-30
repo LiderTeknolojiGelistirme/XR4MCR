@@ -4,10 +4,12 @@ using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 using Viroo;
 using Wave.Native;
+using Zenject;
 
 
 public class MR_Passthrough : MonoBehaviour
 {
+    [Inject] DiContainer _container;
     public bool inMR = false;
 
     private Camera cam;
@@ -15,8 +17,9 @@ public class MR_Passthrough : MonoBehaviour
     private CameraClearFlags savedClearFlags;
 
     private GameObject go;
-
-
+    
+    
+    
 
     void Update()
     {
@@ -62,7 +65,8 @@ public class MR_Passthrough : MonoBehaviour
             }
             else
             {
-                cam.gameObject.AddComponent<TransformGizmo>();
+                _container.InstantiateComponent<TransformGizmo>(cam.gameObject);
+                
                 break;
             }
         }

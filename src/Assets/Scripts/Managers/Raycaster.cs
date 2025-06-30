@@ -66,6 +66,8 @@ namespace Managers
             List<IElement> orderedElements = new List<IElement>();
 
             List<RaycastResult> results = RaycastUIAll(screenPosition);
+
+            
             foreach (RaycastResult result in results)
             {
                 // Debug.Log("Raycast hit: " + result.gameObject.name);
@@ -83,8 +85,10 @@ namespace Managers
             element = FindClosestConnectionToPosition(convertedPosition, graphManager.ConnectionDetectionDistance);
 
             if (element != null)
+            {
                 if (!(element as IClickable).DisableClick)
                     orderedElements.Add(element);
+            }
 
             orderedElements.Sort(LTGUtility.SortByPriority);
 

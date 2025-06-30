@@ -1,0 +1,126 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8029256144302862303
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 819918112757845498}
+  - component: {fileID: 7860917877314599107}
+  - component: {fileID: 1859745656799773388}
+  m_Layer: 0
+  m_Name: VIROO_PrefabContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &819918112757845498
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8029256144302862303}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7860917877314599107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8029256144302862303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbd46af6f6f8cdb47939ec07c3030858, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  instantiableElements:
+  - id: barrier
+    prefab: {fileID: 3092146296593901791, guid: 7378abe302782084bb9412cdb598fd80,
+      type: 3}
+  - id: brown_desk
+    prefab: {fileID: 4707337995912873028, guid: f51c87dd8ad11284f90e46b84aef3da8,
+      type: 3}
+  - id: button
+    prefab: {fileID: 1360097656767615551, guid: 0bb62ca1065f475489861eab44f380be,
+      type: 3}
+  - id: capsule
+    prefab: {fileID: 1026337827554650953, guid: a51268817d7d84640a86cf5364f64f4d,
+      type: 3}
+  - id: chair
+    prefab: {fileID: 8528464032108812184, guid: cb3ada6ab93ca264d87a056293deb870,
+      type: 3}
+  - id: chasis
+    prefab: {fileID: 8830449595805338983, guid: 0455cc17ce406d94aa492daaff38c6cd,
+      type: 3}
+  - id: cube
+    prefab: {fileID: 7501991848453613970, guid: 030866c250d4dad46b19fc608cf11faf,
+      type: 3}
+  - id: cylinder
+    prefab: {fileID: 1153366293749506062, guid: fb6ea41eba2286d429faec28ad85da34,
+      type: 3}
+  - id: glasses
+    prefab: {fileID: 4061122070925969897, guid: ed9d7cd824b120248a6d2864f1ebc3be,
+      type: 3}
+  - id: gloves
+    prefab: {fileID: 4985097380698417329, guid: 6e2bfa16734df4b418c2bfff6df99ad5,
+      type: 3}
+  - id: helmet
+    prefab: {fileID: 7174385691779994287, guid: a03581cdbc7397748b564e5fa0ca2e86,
+      type: 3}
+  - id: jumping-cube
+    prefab: {fileID: 4158579787133069721, guid: 30081cc28b7e03f40b7c809c0def8579,
+      type: 3}
+  - id: kabinet
+    prefab: {fileID: 241880368371197326, guid: 7355a0be943f5dd428fb688b43c5d4fe, type: 3}
+  - id: kawasaki-rs005L
+    prefab: {fileID: 6624975721320176085, guid: e3c1d31ef2f796f4cb669add1e9d403d,
+      type: 3}
+  - id: nightstand
+    prefab: {fileID: 6588645561037889109, guid: 49f7784de1b80be408621130dcefb5af,
+      type: 3}
+  - id: robot
+    prefab: {fileID: 4238404795218241481, guid: d06c09293a03af3408a80e4abdf6744d,
+      type: 3}
+  - id: robot-arm-grabbable-cube
+    prefab: {fileID: 944363728924959158, guid: 92abecf42958fc54c9282a03655ef908, type: 3}
+  - id: sphere
+    prefab: {fileID: 4832405226618093002, guid: fd7c198b45b0d404c890d2fcceefb8a2,
+      type: 3}
+  - id: ur10
+    prefab: {fileID: 5300181998881182306, guid: 286d85a338e20724d8bf1b160800970b,
+      type: 3}
+  - id: ur10e-object
+    prefab: {fileID: 6964343928110803759, guid: d0057270b01f6e843a426bb7663f3f18,
+      type: 3}
+  - id: white-desk
+    prefab: {fileID: 6505933247717161021, guid: f111144d336ccb64eabea3f87b105b66,
+      type: 3}
+  - id: yellow-line
+    prefab: {fileID: 1312225139167484232, guid: 142f88b0be55a0544b0103a721aef34c,
+      type: 3}
+--- !u!114 &1859745656799773388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8029256144302862303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d87af4b140ff1c4f902dd55934e29c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _onlyDirectChildren: 1
+  _targetTag: 

@@ -10,14 +10,16 @@ using Helpers.PortMatchRules;
 using Presenters;
 using UnityEngine.EventSystems;
 using System.Collections;
+using Enums;
 using Unity.VisualScripting;
 using NodeSystem;
+
 
 namespace Managers
 {
     public class Pointer : MonoBehaviour
     {
-        public NoDragScrollRect noDragScrollRect;
+        private bool _isNodeCreationMode = false;
         private GraphManager _graphManager;
         private XRInputManager _inputManager;
         private Raycaster _raycaster;
@@ -31,6 +33,8 @@ namespace Managers
         private Color _color;
         [HideInInspector] public Vector3 position;
 
+        private Vector3 _lastPosition;
+
         public Sprite iconDefault;
         public Sprite iconOnDrag;
 
@@ -40,12 +44,27 @@ namespace Managers
         public bool useLegacyDragMethod = false;
 
         public bool ImageIsActive => customImage && customImage.IsActive();
+        
+        private BaseNodePresenter _nodePresenter;
+        
+        public void CreateGhostNode()
+        {
+            
+            _nodePresenter = _graphManager.CreateNodeAtPosition(_inputManager.GetCanvasPointerPosition(_graphManager), NodeType.Ghost);
+        }
+
+        public void DestroyGhostNode()
+        {
+            _nodePresenter.Remove();
+        }
+        
 
         [Inject]
         public void Construct(GraphManager graphManager, XRInputManager inputManager, SystemManager systemManager,
             Raycaster raycaster)
         {
             Debug.Log("ENTER: Pointer Construct");
+            LogManager.Log("ENTER: Pointer Construct");
             _graphManager = graphManager;
             _inputManager = inputManager;
             _systemManager = systemManager;
@@ -68,6 +87,8 @@ namespace Managers
             var canvas = gameObject.GetComponent<Canvas>();
             canvas.overrideSorting = true;
             canvas.sortingOrder = 32767;
+
+            _lastPosition = Vector3.zero;
         }
 
         public void OnEnable()
@@ -97,31 +118,64 @@ namespace Managers
             _inputManager.e_OnPointerHover.RemoveListener(OnPointerHover);
         }
 
-
-
-
+        
         void OnUpdate()
         {
             if (_inputManager != null)
             {
-                if (_inputManager.xrRayInteractor != null && _inputManager.xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+                // XRRayInteractor null ise bekle
+                if (_inputManager.xrRayInteractor == null)
+                {
+                    Hide();
+                    return;
+                }
+
+                // Interactor aktif değilse bekle
+                if (!_inputManager.xrRayInteractor.gameObject.activeInHierarchy)
+                {
+                    Hide();
+                    return;
+                }
+
+                if (_inputManager.xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
                 {
                     if (hit.transform != null && hit.transform.gameObject != null && hit.transform.gameObject.name == "Plane")
+                    {
                         Show();
+                    }
                     else
+                    {
                         Hide();
+                    }
                 }
                 else
                 {
-                    Debug.Log("xrRayInteractor is null or TryGetCurrent3DRaycastHit failed");
+                    Hide();
                 }
             }
             else
             {
                 Debug.Log("inputManager is null");
+                LogManager.LogError("Pointer: inputManager is null");
             }
 
-             Vector3 newLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
+            Vector3 newLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
+            
+            // COORDINATE SPACE COMPENSATION - Scroll ve Scale offset'lerini kompanse et
+            if (_graphManager.scrollRect != null && _graphManager.scrollRect.content != null)
+            {
+                Vector2 contentPosition = _graphManager.scrollRect.content.anchoredPosition;
+                Vector3 contentScale = _graphManager.contentTransform.localScale;
+                
+                // Scale ile pozisyonu çarp (content ne kadar scale'lendiyse pointer da o kadar çarpılmalı)
+                newLocalPosition.x *= contentScale.x;
+                newLocalPosition.y *= contentScale.y;
+                
+                // Content'in scroll offset'ini ekle
+                newLocalPosition.x += contentPosition.x;
+                newLocalPosition.y += contentPosition.y;
+            }
+            
             ConnectionPresenter closestConnection = _raycaster.FindClosestConnectionToPosition(newLocalPosition, _graphManager.ConnectionDetectionDistance);
             if (closestConnection != _lastHoveredConnection)
             {
@@ -154,16 +208,94 @@ namespace Managers
 
         }
 
-        //public void ResetPointerPosition()
-        //{
+        private void UpdateConnectionHoverState(Vector3 pointerPosition)
+        {
+            ConnectionPresenter closestConnection = _raycaster.FindClosestConnectionToPosition(pointerPosition, _graphManager.ConnectionDetectionDistance);
+
+            if (closestConnection != _lastHoveredConnection)
+            {
+                // Eski bağlantıdan çıkış event'i tetikle
+                if (_lastHoveredConnection != null)
+                {
+                    //Debug.Log($"Hover çıkıldı: {_lastHoveredConnection.Model.ID}");
+                    _lastHoveredConnection.OnPointerHoverExit();
+                }
+
+                // Yeni bağlantıya giriş event'i tetikle
+                if (closestConnection != null)
+                {
+                    //Debug.Log($"Hover edildi: {closestConnection.Model.ID}");
+                    closestConnection.OnPointerHoverEnter();
+                }
+
+                _lastHoveredConnection = closestConnection;
+            }
+        }
+
+
+        public void ResetPointerPositionWhenScrolling()
+        {
+            if (_rectTransform == null || _inputManager == null || _graphManager == null)
+                return;
+
+            Vector3 newLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
             
-        //}
+            // COORDINATE SPACE COMPENSATION - Scroll ve Scale offset'lerini kompanse et
+            if (_graphManager.scrollRect != null && _graphManager.scrollRect.content != null)
+            {
+                Vector2 contentPosition = _graphManager.scrollRect.content.anchoredPosition;
+                Vector3 contentScale = _graphManager.contentTransform.localScale;
+                
+                // Scale ile pozisyonu çarp (content ne kadar scale'lendiyse pointer da o kadar çarpılmalı)
+                newLocalPosition.x *= contentScale.x;
+                newLocalPosition.y *= contentScale.y;
+                
+                // Content'in scroll offset'ini ekle
+                newLocalPosition.x += contentPosition.x;
+                newLocalPosition.y += contentPosition.y;
+            }
+
+            // Check if position has changed horizontally or vertically
+            if (newLocalPosition != _lastPosition)
+            {
+                // Update position
+                _rectTransform.anchoredPosition = newLocalPosition;
+
+                // Store new position
+                _lastPosition = newLocalPosition;
+
+                // Update connection hover state (original position'ı kullan, scroll offset olmadan)
+                Vector3 originalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
+                UpdateConnectionHoverState(originalPosition);
+
+                // Z değerini sıfırla
+                _rectTransform.localPosition = new Vector3(_rectTransform.localPosition.x, _rectTransform.localPosition.y, 0);
+
+                // Store the current position for external use
+                position = _rectTransform.localPosition;
+            }
+        }
 
 
 
         public void OnPointerDown()
         {
             Vector3 canvasLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
+            
+            // COORDINATE SPACE COMPENSATION - Connection detection için aynı compensation'ı uygula
+            if (_graphManager.scrollRect != null && _graphManager.scrollRect.content != null)
+            {
+                Vector2 contentPosition = _graphManager.scrollRect.content.anchoredPosition;
+                Vector3 contentScale = _graphManager.contentTransform.localScale;
+                
+                // Scale ile pozisyonu çarp (content ne kadar scale'lendiyse pointer da o kadar çarpılmalı)
+                canvasLocalPosition.x *= contentScale.x;
+                canvasLocalPosition.y *= contentScale.y;
+                
+                // Content'in scroll offset'ini ekle
+                canvasLocalPosition.x += contentPosition.x;
+                canvasLocalPosition.y += contentPosition.y;
+            }
 
             ConnectionPresenter closestConnection = _raycaster.FindClosestConnectionToPosition(canvasLocalPosition, _graphManager.ConnectionDetectionDistance);
 
@@ -178,6 +310,7 @@ namespace Managers
                 _pointerImage.sprite = _dragIcon;
 
             IElement clickedElement = GetElementCloserToPointer();
+            
             if (clickedElement != null)
                 _systemManager.clickedElement = clickedElement;
 
@@ -197,6 +330,9 @@ namespace Managers
 
                 _systemManager.LTGEvents.TriggerEvent(LTGEventType.OnPointerDown, _systemManager.clickedElement);
             }
+
+            
+
         }
 
        
@@ -207,13 +343,18 @@ namespace Managers
 
         public void Show()
         {
+            if (_pointerImage != null)
+        {
             _pointerImage.enabled = true;
+            }
         }
 
         public void Hide()
         {
+            if (_pointerImage != null)
+        {
             _pointerImage.enabled = false;
-
+            }
         }
 
 
@@ -225,10 +366,17 @@ namespace Managers
             {
                 Vector3 localCanvasPosition = _graphManager.CanvasRectTransform.InverseTransformPoint(hit.point);
 
-
-                // Canvas'ın scale'ini hesaba katmak zorundaysan bunu yap:
-                Vector3 scale = _graphManager.CanvasRectTransform.localScale;
-
+                // COORDINATE SPACE COMPENSATION - Node drag için scale kompensasyonu
+                // Node'lar Content space'inde yaşar, ama pointer pozisyonu Canvas space'inde hesaplanır
+                // Scale olduğunda bu iki space arasında fark oluşur
+                if (_graphManager.scrollRect != null && _graphManager.scrollRect.content != null)
+                {
+                    Vector3 contentScale = _graphManager.contentTransform.localScale;
+                    
+                    // Canvas space'den Content space'e dönüşüm
+                    localCanvasPosition.x /= contentScale.x;
+                    localCanvasPosition.y /= contentScale.y;
+                }
 
                 if (_systemManager.clickedElement is IDraggable draggable)
                 {
@@ -237,6 +385,8 @@ namespace Managers
 
                 _systemManager.LTGEvents.TriggerEvent(LTGEventType.OnDrag, _systemManager.clickedElement);
             }
+            
+            
         }
 
         public void OnPointerUp()
@@ -260,6 +410,10 @@ namespace Managers
                     Debug.LogWarning("Hedef port bulunamadı.");
                     startPort.OnPointerUp(); // Bağlantıyı iptal etmek için başlangıç porta haber ver
                 }
+            }
+            if (_systemManager.clickedElement is IClickable clickable)
+            {
+                clickable.OnPointerUp();
             }
 
             _systemManager.clickedElement = null;
@@ -352,9 +506,8 @@ namespace Managers
                                             return portPresenter;  // Kural başarılı olduysa burada işlem yapabilirsiniz
                                         }
 
-                                        return null;
-
-
+                                        // Eğer custom rule yoksa veya başarısızsa, normal connection kurallarını kontrol et
+                                        return portPresenter;
                                     }
                             }
                         }

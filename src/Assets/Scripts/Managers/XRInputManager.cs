@@ -1,10 +1,13 @@
-﻿using Unity.XR.CoreUtils;
+﻿using MeadowGames.UINodeConnect4;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using Viroo.Cameras;
 using Zenject;
+using System.Collections;
 
 namespace Managers
 {
@@ -16,6 +19,17 @@ namespace Managers
         public bool wasTriggerPressed = false;
         private const float dragThreshold = .1f;
         private Vector3 pointerDownPosition = Vector3.zero;
+        private bool lastTriggerState = false;
+
+        [Header("Dynamic Detection")]
+        [SerializeField] private bool isSearchingForCorrectInteractor = true;
+        [SerializeField] private float searchInterval = 0.5f;
+        [SerializeField] private string[] preferredInteractorNames = {"RightXRRayInteractor", "Right Ray Interactor", "LeftXRRayInteractor", "Left Ray Interactor", "XRRayInteractor", "Hand Ray Interactor"};
+        [SerializeField] private string[] blockedInteractorNames = {"XRGazeInteractor", "Gaze"};
+        
+        [Header("Manual Control")]
+        [SerializeField] private bool forceRightController = true;
+        [SerializeField] private KeyCode switchControllerKey = KeyCode.C;
 
         [Inject]
         public void Construct(SystemManager systemManager, GraphManager graphManager)
@@ -34,9 +48,160 @@ namespace Managers
             _systemManager.RemoveFromUpdate(OnUpdate);
         }
 
+        void Update()
+        {
+            // Manuel controller değiştirme
+            if (Input.GetKeyDown(switchControllerKey))
+            {
+                SwitchToSpecificController();
+            }
+        }
+
         void Start()
         {
-            xrRayInteractor = FindObjectOfType<XRRayInteractor>();
+            // Dinamik olarak doğru XRRayInteractor'ı bul
+            StartCoroutine(FindCorrectXRRayInteractor());
+        }
+
+        private IEnumerator FindCorrectXRRayInteractor()
+        {
+            LogManager.LogInput("Starting dynamic XRRayInteractor search...");
+            
+            while (isSearchingForCorrectInteractor)
+            {
+                XRRayInteractor foundInteractor = FindBestXRRayInteractor();
+                
+                if (foundInteractor != null && IsValidInteractor(foundInteractor))
+                {
+                    // Eski interactor'dan farklıysa değiştir
+                    if (xrRayInteractor != foundInteractor)
+                    {
+                        xrRayInteractor = foundInteractor;
+                        LogManager.LogInput($"Found CORRECT XRRayInteractor: {xrRayInteractor.name}");
+                        LogManager.LogInput($"XRRayInteractor active: {xrRayInteractor.gameObject.activeInHierarchy}");
+                        LogManager.LogInput($"XRRayInteractor enabled: {xrRayInteractor.enabled}");
+                        
+                        // Eğer hand controller bulundu ise aramayı durdur
+                        if (IsHandController(foundInteractor))
+                        {
+                            isSearchingForCorrectInteractor = false;
+                            LogManager.LogInput("Hand controller found! Stopping search.");
+                        }
+                    }
+                }
+                else
+                {
+                    LogManager.LogInput("No valid XRRayInteractor found, continuing search...");
+                }
+                
+                yield return new WaitForSeconds(searchInterval);
+            }
+        }
+
+        private XRRayInteractor FindBestXRRayInteractor()
+        {
+            XRRayInteractor[] allInteractors = FindObjectsOfType<XRRayInteractor>();
+            LogManager.LogInput($"Found {allInteractors.Length} total XRRayInteractors");
+            
+            // Manuel force right controller kontrolü
+            if (forceRightController)
+            {
+                foreach (XRRayInteractor interactor in allInteractors)
+                {
+                    if ((interactor.name.Contains("Right") || interactor.name.Contains("RightXR")) && 
+                        interactor.gameObject.activeInHierarchy && !IsBlockedInteractor(interactor))
+                    {
+                        LogManager.LogInput($"FORCED RIGHT controller: {interactor.name}");
+                        return interactor;
+                    }
+                }
+            }
+            
+            // 1. Önce preferred isimli olanları ara
+            foreach (string preferredName in preferredInteractorNames)
+            {
+                foreach (XRRayInteractor interactor in allInteractors)
+                {
+                    if (interactor.name.Contains(preferredName) && interactor.gameObject.activeInHierarchy)
+                    {
+                        LogManager.LogInput($"Found preferred interactor: {interactor.name}");
+                        return interactor;
+                    }
+                }
+            }
+            
+            // 2. Sonra blocked olmayan herhangi bir aktif interactor
+            foreach (XRRayInteractor interactor in allInteractors)
+            {
+                if (interactor.gameObject.activeInHierarchy && !IsBlockedInteractor(interactor))
+                {
+                    LogManager.LogInput($"Found fallback interactor: {interactor.name}");
+                    return interactor;
+                }
+            }
+            
+            return null;
+        }
+
+        private void SwitchToSpecificController()
+        {
+            LogManager.LogInput("Manual controller switch requested");
+            
+            XRRayInteractor[] allInteractors = FindObjectsOfType<XRRayInteractor>();
+            
+            // Şu anki interactor'ı logla
+            if (xrRayInteractor != null)
+            {
+                LogManager.LogInput($"Current interactor: {xrRayInteractor.name}");
+            }
+            
+            // Mevcut tüm interactorları listele
+            LogManager.LogInput("Available interactors:");
+            for (int i = 0; i < allInteractors.Length; i++)
+            {
+                var interactor = allInteractors[i];
+                LogManager.LogInput($"[{i}] {interactor.name} - Active: {interactor.gameObject.activeInHierarchy}");
+            }
+            
+            // forceRightController toggle et
+            forceRightController = !forceRightController;
+            LogManager.LogInput($"Force right controller toggled to: {forceRightController}");
+            
+            // Yeniden ara
+            isSearchingForCorrectInteractor = true;
+            StartCoroutine(FindCorrectXRRayInteractor());
+        }
+
+        private bool IsValidInteractor(XRRayInteractor interactor)
+        {
+            if (interactor == null) return false;
+            if (!interactor.gameObject.activeInHierarchy) return false;
+            if (!interactor.enabled) return false;
+            
+            return !IsBlockedInteractor(interactor);
+        }
+
+        private bool IsHandController(XRRayInteractor interactor)
+        {
+            foreach (string preferredName in preferredInteractorNames)
+            {
+                if (interactor.name.Contains(preferredName))
+                    return true;
+            }
+            return false;
+        }
+
+        private bool IsBlockedInteractor(XRRayInteractor interactor)
+        {
+            foreach (string blockedName in blockedInteractorNames)
+            {
+                if (interactor.name.Contains(blockedName))
+                {
+                    LogManager.LogInput($"Blocking interactor: {interactor.name} (contains '{blockedName}')");
+                    return true;
+                }
+            }
+            return false;
         }
 
         public override Vector3 ScreenPointerPosition
@@ -47,6 +212,10 @@ namespace Managers
                 {
                     if (xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
                     {
+                        if (Camera.main == null)
+                        {
+                            LogManager.LogError("XRInputManager: Camera.main is null");
+                        }
                         return Camera.main.WorldToScreenPoint(hit.point);
                         
                     }
@@ -114,6 +283,7 @@ namespace Managers
                 if (xrRayInteractor == null)
                 {
                     Debug.LogWarning("XRRayInteractor sahnede bulunamadı.");
+                    LogManager.LogError("XRInputManager: XRRayInteractor sahnede bulunamadi.");
                     return Vector3.zero;
                 }
             }
@@ -128,14 +298,6 @@ namespace Managers
                 // Doğru dönüşüm budur:
                 Vector3 localPoint = canvasRect.InverseTransformPoint(worldHitPoint);
                 
-                // Canvas'ın scale değerini hesaba kat - scale ile ÇARPIYORUZ
-                Vector3 scale = canvasRect.localScale;
-                localPoint = new Vector3(
-                    localPoint.x * scale.x,
-                    localPoint.y * scale.y,
-                    0  // Z değeri her zaman 0
-                );
-
                 return localPoint;
             }
 
@@ -172,12 +334,16 @@ namespace Managers
             }
             if (xrRayInteractor == null)
             {
+                // LogManager.LogError("XRInputManager: xrRayInteractor is null.");
                 xrRayInteractor = FindObjectOfType<XRRayInteractor>();
                 return;
             }
 
             if (!xrRayInteractor.gameObject.activeInHierarchy)
+            {
+                // LogManager.LogError("XRInputManager: xrRayInteractor is not active in hierarchy");
                 return;
+            }
 
             VisualizeRay(); // <-- Raycast'i görselleştirme ekledim
 
@@ -217,7 +383,13 @@ namespace Managers
             float result = 0f;
             if (xrRayInteractor != null && xrRayInteractor.uiPressInput.TryReadValue(out result))
             {
-                return result > 0.1f;
+                bool isPressed = result > 0.1f;
+                // Sadece ilk kez değiştiğinde logla (debug için)
+                if (lastTriggerState != isPressed)
+                {
+                    lastTriggerState = isPressed;
+                }
+                return isPressed;
             }
 
             return false;
@@ -229,6 +401,7 @@ namespace Managers
             if (current && !wasTriggerPressed)
             {
                 pointerDownPosition = ScreenPointerPosition;
+                LogManager.LogInput("Trigger PRESSED - OnPointerDown will fire");
                 return true;
             }
 
@@ -250,7 +423,12 @@ namespace Managers
         bool XRTriggerReleased()
         {
             bool current = GetRawTriggerState();
-            return !current && wasTriggerPressed;
+            bool released = !current && wasTriggerPressed;
+            if (released)
+            {
+                LogManager.LogInput("Trigger RELEASED - OnPointerUp will fire");
+            }
+            return released;
         }
 
         bool XRAux0Pressed()

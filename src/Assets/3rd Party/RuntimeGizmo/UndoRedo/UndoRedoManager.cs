@@ -4,33 +4,33 @@ namespace CommandUndoRedo
 {
 	public static class UndoRedoManager
 	{
-		static UndoRedo undoRedo = new UndoRedo();
+		static UndoRedo _undoRedo = new UndoRedo();
 
-		public static int maxUndoStored {get {return undoRedo.maxUndoStored;} set {undoRedo.maxUndoStored = value;}}
+		public static int maxUndoStored {get {return _undoRedo.maxUndoStored;} set {_undoRedo.maxUndoStored = value;}}
 
 		public static void Clear()
 		{
-			undoRedo.Clear();
+			_undoRedo.Clear();
 		}
 
 		public static void Undo()
 		{
-			undoRedo.Undo();
+			_undoRedo.Undo();
 		}
 
 		public static void Redo()
 		{
-			undoRedo.Redo();
+			_undoRedo.Redo();
 		}
 
 		public static void Insert(ICommand command)
 		{
-			undoRedo.Insert(command);
+			_undoRedo.Insert(command);
 		}
 
 		public static void Execute(ICommand command)
 		{
-			undoRedo.Execute(command);
+			_undoRedo.Execute(command);
 		}
 	}
 }

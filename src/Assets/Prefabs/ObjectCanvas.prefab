@@ -2079,7 +2079,6 @@ GameObject:
   - component: {fileID: 1421171907925262823}
   - component: {fileID: 4400696710958866832}
   - component: {fileID: 7435154688424883632}
-  - component: {fileID: 7731483748774064409}
   m_Layer: 5
   m_Name: ObjectButton (14)
   m_TagString: Untagged
@@ -2189,7 +2188,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 7731483748774064409}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -2225,20 +2224,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &7731483748774064409
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1437039967779193609}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 14
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &1458783034135118102
 GameObject:
   m_ObjectHideFlags: 0
@@ -2251,7 +2236,6 @@ GameObject:
   - component: {fileID: 384389581296202948}
   - component: {fileID: 4478023762155473476}
   - component: {fileID: 9184720923744192378}
-  - component: {fileID: 7204573245431854112}
   m_Layer: 5
   m_Name: ObjectButton (1)
   m_TagString: Untagged
@@ -2361,7 +2345,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 7204573245431854112}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -2397,20 +2381,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &7204573245431854112
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1458783034135118102}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 1
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &1572654587103550374
 GameObject:
   m_ObjectHideFlags: 0
@@ -2423,7 +2393,6 @@ GameObject:
   - component: {fileID: 141879053413337741}
   - component: {fileID: 7248288833842920197}
   - component: {fileID: 6047022136214941514}
-  - component: {fileID: 8505882464235459039}
   m_Layer: 5
   m_Name: ObjectButton (5)
   m_TagString: Untagged
@@ -2533,7 +2502,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 8505882464235459039}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -2569,20 +2538,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &8505882464235459039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1572654587103550374}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 5
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &1612530711495613019
 GameObject:
   m_ObjectHideFlags: 0
@@ -2777,7 +2732,6 @@ GameObject:
   - component: {fileID: 222389154735877871}
   - component: {fileID: 8398144138942941767}
   - component: {fileID: 7868558514645446168}
-  - component: {fileID: 167996033369476799}
   m_Layer: 5
   m_Name: ObjectButton (3)
   m_TagString: Untagged
@@ -2887,7 +2841,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 167996033369476799}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -2923,20 +2877,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &167996033369476799
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1790941361457641926}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 3
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &1886259070759179261
 GameObject:
   m_ObjectHideFlags: 0
@@ -2949,7 +2889,6 @@ GameObject:
   - component: {fileID: 8359766477797053527}
   - component: {fileID: 7408857348662331389}
   - component: {fileID: 5817536563193418114}
-  - component: {fileID: 1595029737012752974}
   m_Layer: 5
   m_Name: ObjectButton (7)
   m_TagString: Untagged
@@ -3059,7 +2998,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1595029737012752974}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -3095,20 +3034,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &1595029737012752974
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1886259070759179261}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 7
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &2005573030155899709
 GameObject:
   m_ObjectHideFlags: 0
@@ -3387,7 +3312,6 @@ GameObject:
   - component: {fileID: 4234085913390189509}
   - component: {fileID: 4189902154343670630}
   - component: {fileID: 6364294517948639561}
-  - component: {fileID: 1357448201586837917}
   m_Layer: 5
   m_Name: ObjectButton (17)
   m_TagString: Untagged
@@ -3497,7 +3421,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1357448201586837917}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -3533,20 +3457,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &1357448201586837917
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2081246283480060344}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 17
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &2100873266072741953
 GameObject:
   m_ObjectHideFlags: 0
@@ -6297,7 +6207,6 @@ GameObject:
   - component: {fileID: 929827121508683687}
   - component: {fileID: 864436093606716443}
   - component: {fileID: 2693741172123747822}
-  - component: {fileID: 183412501167109188}
   m_Layer: 5
   m_Name: ObjectButton (13)
   m_TagString: Untagged
@@ -6407,7 +6316,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 183412501167109188}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -6443,20 +6352,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &183412501167109188
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4371851940735076685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 13
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &4407080687675785225
 GameObject:
   m_ObjectHideFlags: 0
@@ -6926,7 +6821,6 @@ GameObject:
   - component: {fileID: 5191716814339558077}
   - component: {fileID: 6939804220216872635}
   - component: {fileID: 4692238556388221095}
-  - component: {fileID: 6604042501964932403}
   m_Layer: 5
   m_Name: ObjectButton (8)
   m_TagString: Untagged
@@ -7036,7 +6930,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6604042501964932403}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -7072,20 +6966,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &6604042501964932403
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4603198198096471366}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 8
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &4794079231193400559
 GameObject:
   m_ObjectHideFlags: 0
@@ -8094,7 +7974,6 @@ GameObject:
   - component: {fileID: 6726904192118461202}
   - component: {fileID: 5321033639306134772}
   - component: {fileID: 3419152236642075687}
-  - component: {fileID: 794499005534084498}
   m_Layer: 5
   m_Name: ObjectButton (4)
   m_TagString: Untagged
@@ -8204,7 +8083,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 794499005534084498}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -8240,20 +8119,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &794499005534084498
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5498935848161156042}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 4
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &5613949155747886877
 GameObject:
   m_ObjectHideFlags: 0
@@ -9738,7 +9603,6 @@ GameObject:
   - component: {fileID: 2207346829637338591}
   - component: {fileID: 5015600761601784613}
   - component: {fileID: 3192549376632303189}
-  - component: {fileID: 5830534450378529755}
   m_Layer: 5
   m_Name: ObjectButton (11)
   m_TagString: Untagged
@@ -9848,7 +9712,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 5830534450378529755}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -9884,20 +9748,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &5830534450378529755
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6698127866366564958}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 11
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &6808424621250463766
 GameObject:
   m_ObjectHideFlags: 0
@@ -10105,7 +9955,6 @@ GameObject:
   - component: {fileID: 7898534154671180783}
   - component: {fileID: 2314092580985443671}
   - component: {fileID: 2292295110445684327}
-  - component: {fileID: 5213613793738913262}
   m_Layer: 5
   m_Name: ObjectButton (9)
   m_TagString: Untagged
@@ -10215,7 +10064,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 5213613793738913262}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -10251,20 +10100,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &5213613793738913262
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6958987369064391799}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 9
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &6999082862169361285
 GameObject:
   m_ObjectHideFlags: 0
@@ -10277,7 +10112,6 @@ GameObject:
   - component: {fileID: 6604376002533204265}
   - component: {fileID: 2828684859123301036}
   - component: {fileID: 1292912189729939895}
-  - component: {fileID: 8774635668518147496}
   m_Layer: 5
   m_Name: ObjectButton (2)
   m_TagString: Untagged
@@ -10387,7 +10221,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 8774635668518147496}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -10423,20 +10257,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &8774635668518147496
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6999082862169361285}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 2
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &7071309088890413049
 GameObject:
   m_ObjectHideFlags: 0
@@ -10524,7 +10344,6 @@ GameObject:
   - component: {fileID: 3186740822625743656}
   - component: {fileID: 3299041520549451040}
   - component: {fileID: 5430027253931684340}
-  - component: {fileID: 9083409812636282797}
   m_Layer: 5
   m_Name: ObjectButton (16)
   m_TagString: Untagged
@@ -10634,7 +10453,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 9083409812636282797}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -10670,20 +10489,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &9083409812636282797
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7139569557144153247}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 16
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &7187321908161402375
 GameObject:
   m_ObjectHideFlags: 0
@@ -10985,7 +10790,6 @@ GameObject:
   - component: {fileID: 7970521062695070977}
   - component: {fileID: 4718297662935002548}
   - component: {fileID: 5047179976843304919}
-  - component: {fileID: 3660844591847506786}
   m_Layer: 5
   m_Name: ObjectButton (12)
   m_TagString: Untagged
@@ -11095,7 +10899,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3660844591847506786}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -11131,20 +10935,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &3660844591847506786
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7277325864564475370}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 12
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &7281510933572394707
 GameObject:
   m_ObjectHideFlags: 0
@@ -11157,7 +10947,6 @@ GameObject:
   - component: {fileID: 8079245397909201972}
   - component: {fileID: 4452195675714075370}
   - component: {fileID: 5806942055085706986}
-  - component: {fileID: 3356782610420461613}
   m_Layer: 5
   m_Name: ObjectButton
   m_TagString: Untagged
@@ -11267,7 +11056,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3356782610420461613}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -11303,20 +11092,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &3356782610420461613
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7281510933572394707}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 0
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &7656713309157904696
 GameObject:
   m_ObjectHideFlags: 0
@@ -11839,7 +11614,6 @@ GameObject:
   - component: {fileID: 2405957848916450338}
   - component: {fileID: 3695410572716492512}
   - component: {fileID: 670386845746804495}
-  - component: {fileID: 4326138516734743336}
   m_Layer: 5
   m_Name: ObjectButton (10)
   m_TagString: Untagged
@@ -11949,7 +11723,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4326138516734743336}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -11985,20 +11759,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &4326138516734743336
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8031818621687352424}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 10
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &8035516915547451036
 GameObject:
   m_ObjectHideFlags: 0
@@ -12145,7 +11905,6 @@ GameObject:
   - component: {fileID: 1445882266347017692}
   - component: {fileID: 7821226812450941505}
   - component: {fileID: 8437082830450915626}
-  - component: {fileID: 4720504770528285767}
   m_Layer: 5
   m_Name: ObjectButton (15)
   m_TagString: Untagged
@@ -12255,7 +12014,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4720504770528285767}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -12291,20 +12050,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &4720504770528285767
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8091932788984429407}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 15
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &8115339793858683822
 GameObject:
   m_ObjectHideFlags: 0
@@ -12885,7 +12630,6 @@ GameObject:
   - component: {fileID: 2878271036128504854}
   - component: {fileID: 4397793239177836604}
   - component: {fileID: 2519234852351924756}
-  - component: {fileID: 5548628926005215192}
   m_Layer: 5
   m_Name: ObjectButton (6)
   m_TagString: Untagged
@@ -12995,7 +12739,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 5548628926005215192}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: OnSpawnButtonClicked
         m_Mode: 1
@@ -13031,20 +12775,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &5548628926005215192
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9059233506990013876}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c4a2c1435d908c418e4cee6e828bd1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectTypeToSpawn: 6
-  objectTransformPosition: {fileID: 0}
 --- !u!1 &9102353745958846856
 GameObject:
   m_ObjectHideFlags: 0

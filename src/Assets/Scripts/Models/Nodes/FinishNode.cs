@@ -11,7 +11,7 @@ namespace Models.Nodes
         // XML serializasyon için boş constructor
         public FinishNode() { }
         
-        public FinishNode(string id, string title, Color color, bool enableSelect,List<Port> ports) : base(id, title, color, enableSelect,ports)
+        public FinishNode(string id, string title, Color color, bool enableSelect, List<Port> ports) : base(id, title, color, enableSelect, ports)
         {
         }
     }

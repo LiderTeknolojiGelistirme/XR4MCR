@@ -84,6 +84,11 @@ public class NotifierCanvas : MonoBehaviour
         yield return new WaitForSeconds(delay);
         HideDescriptionPanel();
     }
+    
+    public void HideDescriptionPanel(float delay)
+    {
+        StartCoroutine(HideDescriptionAfterDelay(delay));
+    }
 
 
     // Then in your PlayAchievementSound method

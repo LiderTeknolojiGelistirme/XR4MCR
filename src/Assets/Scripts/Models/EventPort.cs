@@ -23,7 +23,7 @@ namespace Models
                 {
                     return result;
                 }
-                return NodeSystem.EventTypeEnum.OnActivated; // Varsayılan değer
+                return NodeSystem.EventTypeEnum.OnStarted; // Varsayılan değer
             }
             set
             {

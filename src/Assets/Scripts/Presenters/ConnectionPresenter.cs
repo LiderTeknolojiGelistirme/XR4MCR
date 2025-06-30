@@ -43,7 +43,7 @@ namespace Presenters
         {
             _rectTransform = GetComponent<RectTransform>();
         }
-        
+
 
         [Inject]
         public void Construct(SystemManager systemManager, NodeConfig config, GraphManager graphManager)
@@ -68,7 +68,7 @@ namespace Presenters
                 Debug.LogWarning("ConnectionPresenter not constructed yet, setting pending model");
                 return;
             }
-    
+
             _model = model;
             // Eğer _model.line henüz oluşturulmamışsa oluşturun.
             if (_model.line == null)
@@ -76,7 +76,7 @@ namespace Presenters
                 _model.line = new Line();
                 Debug.Log("Yeni Line nesnesi oluşturuldu.");
             }
-    
+
             Debug.Log($"Connection initialized with model ID: {model.ID}");
             // UpdateLine(); // Eğer gerekliyse burada çağırabilirsiniz.
         }
@@ -87,13 +87,13 @@ namespace Presenters
             UpdateLine();
             _model.line.Draw(_graphManager.LineRenderer);
         }
-        
+
 
 
 
         public void UpdateLine()
         {
-    
+
             // Eğer tüm referanslar null değilse, devam edebilirsiniz.
             if (_graphManager != null)
             {
@@ -104,10 +104,20 @@ namespace Presenters
                     _model.TargetPort.Model.ControlPoint.Position,
                     _model.TargetPort.transform.position
                 });
-    
+
                 Vector2[] newPoints =
                     LineUtils.ConvertLinePointsToCurve(linePoints, Connection.CurveStyleType.Soft_Z_Shape);
-    
+
+                // Canvas sınırları içinde kal
+                Rect canvasRect = _graphManager.CanvasRectTransform.rect;
+                for (int i = 0; i < newPoints.Length; i++)
+                {
+                    newPoints[i] = new Vector2(
+                        Mathf.Clamp(newPoints[i].x, canvasRect.xMin, canvasRect.xMax),
+                        Mathf.Clamp(newPoints[i].y, canvasRect.yMin, canvasRect.yMax)
+                    );
+                }
+
                 Model.line.SetPoints(newPoints);
             }
         }
@@ -169,13 +179,13 @@ namespace Presenters
 
         public void OnPointerUp()
         {
-            
+
         }
 
         public string ID { get; set; }
         public int Priority { get; }
         public void Remove()
-        { 
+        {
             Unselect();
             _graphManager.ConnectionPresenters.Remove(this);
             Model.SourcePort.UpdateIcon();

@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Managers;
 
 namespace Presenters.NodePresenters
 {
@@ -19,14 +20,11 @@ namespace Presenters.NodePresenters
         {
             base.CompleteNode();
         }
-
-        public override void DeactivateNode()
-        {
-            base.DeactivateNode();
-        }
+        
 
         public override void Play()
         {
+            LogManager.LogScenario("Start node executed");
             Debug.Log("This is start");
             CompleteNode();
         }

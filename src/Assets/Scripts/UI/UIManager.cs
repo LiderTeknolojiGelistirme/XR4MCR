@@ -9,6 +9,9 @@ namespace Managers
 {
     public class UIManager : MonoBehaviour
     {
+        
+
+
         [Header("Senaryo İlerleme Bilgileri")]
         [SerializeField] private TextMeshProUGUI _nodeIndexText; // Örn: "2/5" veya "Katman: 2/5"
         [SerializeField] private TextMeshProUGUI _nodeTitleText; // Node başlığı

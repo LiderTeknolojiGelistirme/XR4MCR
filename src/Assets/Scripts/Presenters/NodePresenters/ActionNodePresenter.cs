@@ -6,6 +6,7 @@ using Models.Nodes;
 using Managers;
 using System.Threading.Tasks;
 using System;
+using Enums;
 
 namespace Presenters.NodePresenters
 {
@@ -54,6 +55,11 @@ namespace Presenters.NodePresenters
             await Task.Delay( 1000 ); //default
         }
 
+        public virtual void StopAction()
+        {
+
+        }
+
         protected void SetTargetObject(string value)
         {
             if (ActionModel != null)
@@ -84,7 +90,7 @@ namespace Presenters.NodePresenters
         }
         
         // Action tipini günceller
-        protected void SetActionType(ActionNode.ActionType type)
+        protected void SetActionType(NodeType type)
         {
             if (ActionModel != null)
             {

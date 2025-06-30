@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd81441f911907847810a0ee5edcefc0, type: 3}
   m_Name: DefaultNodeConfig
   m_EditorClassIdentifier: 
+  rightControllerTutorialPrefab: {fileID: 3737403438798604305, guid: 0779b7a9630a93d4883193de30a0b833,
+    type: 3}
+  leftControllerTutorialPrefab: {fileID: 235565854539791034, guid: 65ee748026b22754ea0589f39bf137af,
+    type: 3}
   size: {x: 200, y: 150}
   defaultNodeColor: {r: 0.754717, g: 0.754717, b: 0.754717, a: 1}
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
@@ -23,6 +27,8 @@ MonoBehaviour:
   inputPortColor: {r: 0, g: 0, b: 1, a: 1}
   outputPortColor: {r: 1, g: 0, b: 0, a: 1}
   eventPortColor: {r: 1, g: 0.5, b: 0.1, a: 1}
+  connectionPrefab: {fileID: 7466685907074099281, guid: cec26b546a25f224b807f78f7b139105,
+    type: 3}
   connectionColor: {r: 0, g: 1, b: 0, a: 1}
   connectionWidth: 5
   textColor: {r: 0, g: 0, b: 0, a: 1}
@@ -34,6 +40,8 @@ MonoBehaviour:
   dragPointerSprite: {fileID: 8895775685280376203, guid: eb11ac9a06fb4792b393db9b83ab43b4,
     type: 3}
   pointerColor: {r: 1, g: 1, b: 1, a: 1}
+  GhostNode: {fileID: 3086540526355345976, guid: 1e87ea9d43b076645b715beb97987aee,
+    type: 3}
   LogicalOR: {fileID: 344843906939382852, guid: 3fef74ef653e93b4a93513d99ca3ef38,
     type: 3}
   LogicalAND: {fileID: 6517919733647552742, guid: 3b87a386c9408d34f92c2511e63ffc75,
@@ -45,9 +53,9 @@ MonoBehaviour:
     type: 3}
   lookNode: {fileID: 7355070440024887142, guid: 54ca8ba7e5d415f408a860362b1e41a5,
     type: 3}
-  startNode: {fileID: 2077532772004973028, guid: fd305e9d7eee3004c97762883c2f6bcf,
+  startNode: {fileID: 509828657257946359, guid: 560aedf4522324d4694f005cb1f36978,
     type: 3}
-  finishNode: {fileID: 2077532772004973028, guid: 5cb949456ed941b458eab962e0d4a361,
+  finishNode: {fileID: 3428891296206129206, guid: 03dca70278e392b43bb649b5a489ba2a,
     type: 3}
   playSoundActionNode: {fileID: 5732927268436783190, guid: 5a6c68b65abb2be45a4b4303344ac7ab,
     type: 3}
@@ -63,7 +71,15 @@ MonoBehaviour:
   playAnimationActionNode: {fileID: 0}
   descriptionActionNode: {fileID: 5732927268436783190, guid: 0d9148e35f700134f8391d5c7da43e0c,
     type: 3}
+  worldDescriptionActionNode: {fileID: 5732927268436783190, guid: 461720c2295e8b849b2408999608d2de,
+    type: 3}
   robotAnimationActionNode: {fileID: 1177347157598117146, guid: a04919186468fbc4cb106b3d5354eeb4,
+    type: 3}
+  vfxActionNode: {fileID: 8000507658441104386, guid: 52799d3dfd833e447a727188236ba52e,
+    type: 3}
+  highlightObjectActionNode: {fileID: 1771469395799951928, guid: baba2d4b49a4f3849b84ac4e38e95b77,
+    type: 3}
+  toolTouchNode: {fileID: 4025036666601873161, guid: 5c8c5709a84e9064d8ef4faf7c2ba849,
     type: 3}
   capsulePrefab: {fileID: 1026337827554650953, guid: a51268817d7d84640a86cf5364f64f4d,
     type: 3}
@@ -71,7 +87,7 @@ MonoBehaviour:
     type: 3}
   cylinderPrefab: {fileID: 1153366293749506062, guid: fb6ea41eba2286d429faec28ad85da34,
     type: 3}
-  spherePrefab: {fileID: 4832405226618093002, guid: fd7c198b45b0d404c890d2fcceefb8a2,
+  spherePrefab: {fileID: 4832405226618093002, guid: 06201eef07d789f49a873914e52a47e6,
     type: 3}
   robotPrefab: {fileID: 8080115157840282538, guid: ef5c80549bc576547a9adab967ff89bb,
     type: 3}
@@ -101,5 +117,21 @@ MonoBehaviour:
     type: 3}
   yellowlinePrefab: {fileID: 1312225139167484232, guid: 142f88b0be55a0544b0103a721aef34c,
     type: 3}
+  allenwrenchPrefab: {fileID: 9076147430739502483, guid: 3aff77d4c7aaf944b9b763ebe9cfebb5,
+    type: 3}
+  multimeterPrefab: {fileID: 7258402761534334763, guid: b37cccf0ab1c4db438cdadfef170c38e,
+    type: 3}
+  nipersPrefab: {fileID: 7074477337311069410, guid: 1366dce34e61e9c4aa12275c4fa7936d,
+    type: 3}
+  pincersPrefab: {fileID: 932293108700156058, guid: 06628a329e094284bb7718fc314184e2,
+    type: 3}
+  screwdriverPrefab: {fileID: 1870843773338084588, guid: 042aafa1b0334e948a4520c684c8ae78,
+    type: 3}
+  wrenchPrefab: {fileID: 5987789508209423365, guid: 24d6299bc854acd4ca10bd5c16d07f41,
+    type: 3}
+  controlboxPrefab: {fileID: 7253130430721737346, guid: ed151999b9bc4c544925763040defcab,
+    type: 3}
   achievementCanvas: {fileID: 4714512366906773289, guid: 56ffac0885456cb45a85e1ff2e5023b1,
+    type: 3}
+  worldNotificationCanvas: {fileID: 1650659017430773953, guid: fde1ab3975bac3247803f18e6ce0c019,
     type: 3}

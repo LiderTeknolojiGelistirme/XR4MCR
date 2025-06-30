@@ -13,6 +13,7 @@ using Zenject;
 using CustomGraphics;
 using UnityEditor;
 using System.Linq;
+using Commands;
 using Interfaces;
 using Models.Nodes;
 using NodeSystem.Events;
@@ -23,6 +24,8 @@ using UnityEngine.Serialization;
 using IGraphElement = Interfaces.IGraphElement;
 using static Presenters.PortPresenter;
 using Presenters.NodePresenters;
+using UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard;
+using RectTransform = UnityEngine.RectTransform;
 
 namespace Presenters
 {
@@ -30,11 +33,12 @@ namespace Presenters
     public abstract class BaseNodePresenter : MonoBehaviour, IGraphElement, ISelectable, IDraggable,
         IClickable, IHover
     {
+
         [SerializeField] private List<PortPresenter> ports = new List<PortPresenter>();
         [SerializeField] private List<EventPortPresenter> eventPorts = new List<EventPortPresenter>();
-        
+        [SerializeField] private XRKeyboardDisplay keyboardDisplay;
         protected ScenarioManager ScenarioManager;
-        private BaseNode _model;
+        protected BaseNode _model;
         private DiContainer _container;
         private Outline _outline;
         private Outline _headerOutline;
@@ -48,12 +52,47 @@ namespace Presenters
         private Vector3 _dragOffset;
         protected XRInputManager XRInputManager;
         private NotifierCanvas _achievementNotifier;
+        private XRKeyboard XRKeyboard;
 
+        private Vector2 initialPosition, endPosition;
+
+       
+        public void UpdateNodeDescription(string newText)
+        {
+            Model.Description = newText;
+        }
+
+        /// <summary>
+        /// Model'deki ortak özellikleri UI'ya aktarır (Load sonrası).
+        /// Child sınıflar bu metodu override ederek kendi özelliklerini ekleyebilir.
+        /// </summary>
+        public virtual void SyncModelToUI()
+        {
+            if (Model == null) return;
+
+            // Description alanını sync et - keyboardDisplay.inputField aslında description input field'ı
+            // UpdateNodeDescription metodu da keyboardDisplay.onTextSubmitted'e bağlı
+            if (keyboardDisplay != null && keyboardDisplay.inputField != null)
+            {
+                // Model'deki description'ı input field'a aktar (boş olsa bile)
+                keyboardDisplay.inputField.text = Model.Description ?? "";
+                LogManager.LogSuccess($"Description synced: '{Model.Description}' for node: {Model.Title}");
+            }
+            else
+            {
+                LogManager.LogWarning($"No description input field found for node: {Model.Title}");
+            }
+
+            // Title, Color ve diğer ortak özellikler buraya eklenebilir
+            // Örnek: Node'un title'ını güncelleme, renk ayarları vs.
+
+            LogManager.LogSuccess($"Base UI synced for node: {Model.Title} - Type: {this.GetType().Name}");
+        }
 
         [Inject]
         public void Construct(GraphManager graphManager, SystemManager systemManager, ScenarioManager scenarioManager,
             NodeConfig config,
-            DiContainer container, XRInputManager inputManager)
+            DiContainer container, XRInputManager inputManager, XRKeyboard keyboard)
         {
             Debug.Log("ENTER: NodePresenter Construct");
             ScenarioManager = scenarioManager;
@@ -62,7 +101,17 @@ namespace Presenters
             _config = config;
             _container = container;
             XRInputManager = inputManager;
+            XRKeyboard = keyboard;
+
+            // XRKeyboardDisplay'i ayarlama örneği
+            if (keyboardDisplay != null)
+            {
+                keyboardDisplay.updateOnKeyPress = true;
+                keyboardDisplay.onTextSubmitted.AddListener(UpdateNodeDescription);
+            }
+            
         }
+
 
         public IReadOnlyList<PortPresenter> Ports => ports;
 
@@ -71,12 +120,12 @@ namespace Presenters
         public BaseNode Model
         {
             get => _model;
-            private set => _model = value;
+            set => _model = value;
         }
 
         protected virtual void Update()
         {
-            if (Model.IsActive && Model.IsStarted && !Model.IsCompleted)
+            if (Model.IsStarted && !Model.IsCompleted)
             {
                 Play();
             }
@@ -85,11 +134,18 @@ namespace Presenters
 
         public void Initialize(BaseNode model)
         {
+            _rectTransform = GetComponent<RectTransform>();
+            if(keyboardDisplay != null)
+            {
+                keyboardDisplay.keyboard = XRKeyboard;
+
+            }            
+
             _model = model;
             _outline = GetComponent<Outline>() ?? gameObject.AddComponent<Outline>();
             _outline.effectColor = _config.outlineColor;
             _outline.enabled = false;
-            
+
             // Header GameObject'ini bul
             Transform headerTransform = transform.Find("Header");
             if (headerTransform != null)
@@ -101,7 +157,7 @@ namespace Presenters
                 _headerOutline.effectDistance = new Vector2(3, -3);
                 _headerOutline.enabled = false;
             }
-            
+
             // Normal portları başlat
             ports = GetComponentsInChildren<PortPresenter>()
                 .Where(p => !(p is EventPortPresenter))
@@ -117,7 +173,7 @@ namespace Presenters
                 // Port presenter'ı initialize et
                 portPresenter.Initialize(portModel);
             }
-            
+
             // Event portlarını başlat
             eventPorts = GetComponentsInChildren<EventPortPresenter>().ToList();
             for (int i = 0; i < eventPorts.Count; i++)
@@ -125,14 +181,14 @@ namespace Presenters
                 var eventPort = eventPorts[i];
                 // Event tipi için benzersiz bir isim oluştur (i index kullanarak)
                 string portName = $"EventPort_{eventPort.EventType}_{i}";
-                
+
                 // Event portu için özel EventPort model oluştur
                 var portModel = new Models.EventPort(
-                    PolarityType.Output, 
+                    PolarityType.Output,
                     portName,
                     this,
                     eventPort.EventType); // EventPortPresenter'da tanımlanan EventType değerini kullan
-                
+
                 // Event port presenter'ı initialize et
                 eventPort.Initialize(portModel);
             }
@@ -267,27 +323,41 @@ namespace Presenters
 
         public void OnPointerDown()
         {
+            initialPosition = _rectTransform.anchoredPosition;
             // ScrollRect'i sürükleme süresince devre dışı bırak
             if (_graphManager != null && _graphManager.scrollRect != null)
             {
                 _graphManager.scrollRect.enabled = false;
             }
-            
+
             if (!SystemManager.selectedElements.Contains(this))
             {
                 Debug.Log("tiklandi");
                 Select();
                 transform.SetAsLastSibling();
-                
+
                 Vector2 localPointerPosition;
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    _graphManager.CanvasRectTransform, 
-                    XRInputManager.ScreenPointerPosition, 
-                    Camera.main, 
+                    _graphManager.CanvasRectTransform,
+                    XRInputManager.ScreenPointerPosition,
+                    Camera.main,
                     out localPointerPosition);
+                
+                // COORDINATE SPACE COMPENSATION - Drag offset hesaplaması için scale kompensasyonu
+                // localPointerPosition Canvas space'inde, ama transform.localPosition Content space'inde
+                Vector3 compensatedPointerPosition = localPointerPosition;
+                if (_graphManager.scrollRect != null && _graphManager.scrollRect.content != null)
+                {
+                    Vector3 contentScale = _graphManager.contentTransform.localScale;
+                    
+                    // Canvas space'den Content space'e dönüşüm
+                    compensatedPointerPosition.x /= contentScale.x;
+                    compensatedPointerPosition.y /= contentScale.y;
+                }
+                
                 _mouseDownPosition = Input.mousePosition;
                 _nodeStartPosition = transform.localPosition;
-                _dragOffset = (Vector3)localPointerPosition - transform.localPosition;
+                _dragOffset = compensatedPointerPosition - transform.localPosition;
             }
             else
             {
@@ -302,6 +372,12 @@ namespace Presenters
             {
                 _graphManager.scrollRect.enabled = true;
             }
+
+            endPosition = _rectTransform.anchoredPosition;
+            if (initialPosition != endPosition)
+            {
+                UndoRedoManager.Insert(new ChangePositionNodeCommand(_graphManager,this,initialPosition,endPosition));
+            }
         }
 
         public bool EnableDrag { get; set; } = true;
@@ -313,19 +389,19 @@ namespace Presenters
             {
                 _graphManager.scrollRect.enabled = false;
             }
-            
+
             if (EnableDrag)
             {
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(_graphManager.CanvasRectTransform,
                     Input.mousePosition, null, out var mousePos);
-                
+
                 Select();
             }
         }
 
         public void OnDrag(Vector2 position)
         {
-            
+
             if (EnableDrag)
             {
                 transform.localPosition = position - (Vector2)_dragOffset;
@@ -367,11 +443,35 @@ namespace Presenters
             }
         }
 
+        public void OnClickInputField()
+        {
+            keyboardDisplay.keyboard.Open();
+        }
+
         public string ID { get; set; }
 
         public int Priority { get; }
 
-        public void Remove() => Destroy(gameObject);
+        public void Remove()
+        {
+            if (_graphManager.NodePresenters.Contains(this))
+            {
+                _graphManager.NodePresenters.Remove(this);
+
+                // Ghost node'lar için log almıyoruz
+                if (!(this is NodePresenters.GhostNodePresenter))
+                {
+                    LogManager.LogInteraction("Node removed: " + Model.Title);
+                }
+            }
+            Destroy(gameObject);
+            
+            // Ghost node'lar için log almıyoruz
+            if (!(this is NodePresenters.GhostNodePresenter))
+            {
+                LogManager.LogInteraction("Gameobject destroyed: " + Model.Title);
+            }
+        }
 
         public PortPresenter GetPortPresenterByModel(Port port)
         {
@@ -397,10 +497,10 @@ namespace Presenters
 
         #region ScenarioMembers
 
-        public UnityEvent onActivated,
+        public UnityEvent
             onStarted,
             onCompleted,
-            onDeactivated;
+            onSkip;
 
         public virtual void Play()
         {
@@ -410,13 +510,10 @@ namespace Presenters
         public virtual void ActivateNode()
         {
             Model.IsActive = true;
-            onActivated.Invoke();
-            
-            // Event portlarını tetikle
-            TriggerEventPorts(NodeSystem.EventTypeEnum.OnActivated);
-            
+
+
             ScenarioManager.ActiveNodePresenter = this;
-            
+
             // Header outline'ı göster
             if (_headerOutline != null)
             {
@@ -428,8 +525,9 @@ namespace Presenters
         {
             ActivateNode();
             Model.IsStarted = true;
+            Model.IsCompleted = false;
             onStarted.Invoke();
-            
+
             // Event portlarını tetikle
             TriggerEventPorts(NodeSystem.EventTypeEnum.OnStarted);
         }
@@ -438,17 +536,40 @@ namespace Presenters
         {
             Model.IsCompleted = true;
             onCompleted.Invoke();
-            
+
             // Event portlarını tetikle
             TriggerEventPorts(NodeSystem.EventTypeEnum.OnCompleted);
-            
+
             // Header outline'ı gizle
             if (_headerOutline != null)
             {
                 _headerOutline.enabled = false;
             }
 
-            if (this is not StartNodePresenter && this is not FinishNodePresenter)
+            if (this is not StartNodePresenter && this is not FinishNodePresenter && this is not ActionNodePresenter)
+            {
+                _achievementNotifier = ScenarioManager.achievementCanvas.GetComponent<NotifierCanvas>();
+                _achievementNotifier.GetComponent<NotifierCanvas>().ApplyToAchievementNotification();
+            }
+
+            if (TryToGoNextNode()) return;
+            OnLastNodeComplete();
+        }
+
+        public virtual void OnSkipNode()
+        {
+            onSkip.Invoke();
+
+            // Event portlarını tetikle
+            TriggerEventPorts(NodeSystem.EventTypeEnum.OnSkip);
+
+            // Header outline'ı gizle
+            if (_headerOutline != null)
+            {
+                _headerOutline.enabled = false;
+            }
+
+            if (this is not StartNodePresenter && this is not FinishNodePresenter && this is not ActionNodePresenter)
             {
                 _achievementNotifier = ScenarioManager.achievementCanvas.GetComponent<NotifierCanvas>();
                 _achievementNotifier.GetComponent<NotifierCanvas>().ApplyToAchievementNotification();
@@ -460,7 +581,6 @@ namespace Presenters
 
         private void OnLastNodeComplete()
         {
-            DeactivateNode();
             ScenarioManager.FinishScenario();
         }
 
@@ -476,28 +596,25 @@ namespace Presenters
                         {
                             if (connectionPresenter.Model.TargetPort != null)
                             {
-                                // Önce bu node'u deaktive et
-                                DeactivateNode();
-                                
+
                                 // Sonra hedef node'u başlat (bu ScenarioManager.ActiveNodePresenter'ı günceller)
                                 connectionPresenter.Model.TargetPort.Model.baseNode.StartNode();
-                                
+                                ScenarioManager.ActiveNodePresenter =
+                                    connectionPresenter.Model.TargetPort.Model.baseNode;
                                 // UI'ı güncelle
                                 ScenarioManager.UpdateNodeInfoDisplay();
-                                
-                                return true;
                             }
                         }
-                        
-                        DeactivateNode();
+
                         return true;
                     }
+                    return false;
                 }
             }
 
             return false;
         }
-        
+
         private bool TryToGoPreviousNode()
         {
             foreach (PortPresenter portPresenter in ports)
@@ -508,15 +625,14 @@ namespace Presenters
                     {
                         if (portPresenter.ConnectionPresenters[0].Model.SourcePort != null)
                         {
-                            // Önce bu node'u deaktive et
-                            DeactivateNode();
-                            
+
                             // Sonra kaynak node'u başlat (bu ScenarioManager.ActiveNodePresenter'ı günceller)
                             portPresenter.ConnectionPresenters[0].Model.SourcePort.Model.baseNode.StartNode();
-                            
+                            ScenarioManager.ActiveNodePresenter =
+                                portPresenter.ConnectionPresenters[0].Model.SourcePort.Model.baseNode;
                             // UI'ı güncelle
                             ScenarioManager.UpdateNodeInfoDisplay();
-                            
+
                             return true;
                         }
                     }
@@ -526,27 +642,11 @@ namespace Presenters
             return false;
         }
 
-        public virtual void DeactivateNode()
-        {
-            Model.IsActive = false;
-            Model.IsStarted = false;
-            Model.IsCompleted = false;
-            onDeactivated.Invoke();
-            
-            // Event portlarını tetikle
-            TriggerEventPorts(NodeSystem.EventTypeEnum.OnDeactivated);
-            
-            // Header outline'ı gizle
-            if (_headerOutline != null)
-            {
-                _headerOutline.enabled = false;
-            }
-        }
 
         public virtual void GoToNextNode()
         {
             CompleteNode();
-            //if (TryToGoNextNode()) return;
+            if (TryToGoNextNode()) return;
             OnLastNodeComplete();
         }
 
@@ -556,17 +656,6 @@ namespace Presenters
             Debug.LogWarning("En bastaki node'dasin!");
         }
 
-        public virtual void OnComplete()
-        {
-        }
-
-        public virtual void OnStart()
-        {
-        }
-
-        public virtual void OnSkip()
-        {
-        }
 
         // Event portlarını tetikleme metodu
         private void TriggerEventPorts(NodeSystem.EventTypeEnum eventType)
@@ -578,6 +667,28 @@ namespace Presenters
                     eventPort.TriggerEvent();
                 }
             }
+        }
+
+        #endregion
+
+        #region Edit Mode Functions
+
+        /// <summary>
+        /// Düzenleme modunu açar. Tüm düzenleme UI elemanlarını gösterir.
+        /// Child sınıflar bu metodu override ederek kendi düzenleme elemanlarını yönetebilir.
+        /// </summary>
+        public virtual void EditModeOn()
+        {
+           
+        }
+
+        /// <summary>
+        /// Düzenleme modunu kapatır. Tüm düzenleme UI elemanlarını gizler.
+        /// Child sınıflar bu metodu override ederek kendi düzenleme elemanlarını yönetebilir.
+        /// </summary>
+        public virtual void EditModeOff()
+        {
+            
         }
 
         #endregion

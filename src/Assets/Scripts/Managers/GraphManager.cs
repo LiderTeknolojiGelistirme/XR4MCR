@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using Presenters;
@@ -15,7 +16,12 @@ using Unity.XR.CoreUtils;
 using Zenject;
 using LTGLineRenderer = CustomGraphics.LTGLineRenderer;
 using Object = UnityEngine.Object;
-
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using TMPro;
+using Virtualware.Networking.Client;
+using Virtualware.Networking.Client.SceneManagement;
+using Virtualware.Networking.Client.SessionManagement;
+using UI;
 
 namespace Managers
 {
@@ -25,6 +31,12 @@ namespace Managers
     [RequireComponent(typeof(GraphicRaycaster))]
     public class GraphManager : MonoBehaviour
     {
+        private float maxScale = 3f;
+        private float minScale = .2f;
+
+        public TMP_InputField scaleInput;
+        public Slider scaleSlider;
+        private float scaleValue { get; set; }
         public RectTransform contentTransform;
         public ScrollRect scrollRect;
         public Camera MainCamera;
@@ -60,13 +72,27 @@ namespace Managers
         private NodePresenterFactory _nodePresenterFactory;
         private XRInputManager _inputManager;
         private bool _isInitialized = false;
-        
+
         private ObjectFactory _objectFactory;
 
-        private string _filePath;
+        private ScenarioFileManager _scenarioFileManager;
 
         [SerializeField] private float _connectionDetectionDistance = 10f;
-        public float ConnectionDetectionDistance => _connectionDetectionDistance;
+        public float ConnectionDetectionDistance 
+        { 
+            get => _connectionDetectionDistance;
+            set => _connectionDetectionDistance = value;
+        }
+
+        [Header("Dynamic Content System")]
+        [SerializeField] private float _contentMultiplier = 2f; // Content viewport'un kaç katı olsun
+        [SerializeField] private Vector2 _expansionOffset = new Vector2(1000f, 500f); // Genişletme offset'i
+
+        private INetworkObjectsService _networkObjectsService;
+        private INetworkScenesService _networkScenesService;
+        private ISessionClientsProvider _sessionClientsProvider;
+
+        [SerializeField] private PrefabInstantiableContainer _prefabContainer;
 
         #region Connection Management
 
@@ -82,16 +108,18 @@ namespace Managers
             if (connectionPresenter != null)
             {
                 _connectionPresenters.Add(connectionPresenter);
-                
+
                 // Bilgi paneline bağlantı oluşturuldu logu ekle
-                LogManager.LogInteraction($"Connection created: {sourcePort.gameObject.name} -> {targetPort.gameObject.name}");
+                LogManager.LogInteraction(
+                    $"Connection created: {sourcePort.gameObject.name} -> {targetPort.gameObject.name}");
             }
             else
             {
                 Debug.LogWarning("Connection creation failed - Factory returned null");
-                
+
                 // Bilgi paneline bağlantı başarısız logu ekle
-                LogManager.LogWarning($"Connection failed: {sourcePort.gameObject.name} -> {targetPort.gameObject.name}");
+                LogManager.LogWarning(
+                    $"Connection failed: {sourcePort.gameObject.name} -> {targetPort.gameObject.name}");
             }
 
             return connectionPresenter;
@@ -114,7 +142,6 @@ namespace Managers
         // Connection modellerine erişmek için extension
         public IEnumerable<Connection> ConnectionModels => _connectionPresenters.Select(p => p.Model);
 
-        
 
         public IEnumerable<Connection> GetPortConnections(PortPresenter portRef)
         {
@@ -124,11 +151,135 @@ namespace Managers
 
         #endregion
 
+        #region Dynamic Content System
+
+        /// <summary>
+        /// Viewport size'ına göre varsayılan content size'ı ayarlar
+        /// </summary>
+        private void InitializeContentSize()
+        {
+            if (scrollRect == null || scrollRect.viewport == null || contentTransform == null) return;
+
+            // Viewport size'ı al
+            Vector2 viewportSize = scrollRect.viewport.rect.size;
+            
+            // Default content size = viewport * multiplier
+            Vector2 defaultContentSize = viewportSize * _contentMultiplier;
+            contentTransform.sizeDelta = defaultContentSize;
+            
+            // Content'in merkezini viewport'un merkezinde göstermek için pozisyonu ayarla
+            // Content'in merkezi (0,0) viewport'un merkezinde görünmeli
+            Vector2 centerOffset = defaultContentSize * 0.5f - viewportSize * 0.5f;
+            contentTransform.anchoredPosition = centerOffset;
+            
+            LogManager.Log($"Content initialized - Viewport: {viewportSize}, Content: {defaultContentSize}, CenterOffset: {centerOffset}");
+        }
+
+        /// <summary>
+        /// Mevcut görünür alanın bounds'larını hesaplar
+        /// </summary>
+        private Bounds GetCurrentVisibleBounds()
+        {
+            if (scrollRect == null || scrollRect.viewport == null) 
+                return new Bounds(Vector3.zero, Vector3.one * 1000f);
+
+            Vector2 viewportSize = scrollRect.viewport.rect.size;
+            Vector2 contentPosition = scrollRect.content.anchoredPosition;
+            
+            // Görünür alanın merkezi (content space'inde)
+            Vector2 visibleCenter = -contentPosition;
+            
+            // Görünür alan bounds'ı
+            Bounds visibleBounds = new Bounds(visibleCenter, viewportSize);
+            
+            return visibleBounds;
+        }
+
+        /// <summary>
+        /// Node pozisyonunun görünür alan dışında olup olmadığını kontrol eder
+        /// </summary>
+        /// <param name="nodePosition">Node pozisyonu</param>
+        /// <returns>True eğer content genişletilmesi gerekiyorsa</returns>
+        public bool ShouldExpandContentForNode(Vector2 nodePosition)
+        {
+            Bounds visibleBounds = GetCurrentVisibleBounds();
+            
+            // Node görünür alan içinde mi?
+            if (visibleBounds.Contains(nodePosition))
+            {
+                return false; // Genişletme gerekmiyor
+            }
+            
+            LogManager.Log($"Node visible area dışında: {nodePosition}, Visible bounds: {visibleBounds}");
+            return true; // Genişletme gerekiyor
+        }
+
+        /// <summary>
+        /// Content'i node pozisyonuna göre dinamik olarak genişletir
+        /// </summary>
+        /// <param name="nodePosition">Yeni node pozisyonu</param>
+        public void ExpandContentForNode(Vector2 nodePosition)
+        {
+            if (contentTransform == null) return;
+
+            Vector2 currentContentSize = contentTransform.sizeDelta;
+            Vector2 newContentSize = currentContentSize;
+            
+            // X ekseni kontrolü
+            float nodeAbsX = Mathf.Abs(nodePosition.x);
+            float requiredXSize = nodeAbsX + _expansionOffset.x / 2f;
+            if (requiredXSize > currentContentSize.x / 2f)
+            {
+                newContentSize.x = requiredXSize * 2f; // Merkezi korumak için 2 ile çarp
+            }
+            
+            // Y ekseni kontrolü
+            float nodeAbsY = Mathf.Abs(nodePosition.y);
+            float requiredYSize = nodeAbsY + _expansionOffset.y / 2f;
+            if (requiredYSize > currentContentSize.y / 2f)
+            {
+                newContentSize.y = requiredYSize * 2f; // Merkezi korumak için 2 ile çarp
+            }
+            
+            // Content size'ı güncelle (sadece gerekiyorsa)
+            if (newContentSize != currentContentSize)
+            {
+                contentTransform.sizeDelta = newContentSize;
+                
+                // Viewport merkezi content'in merkezinde görünmesi için pozisyonu sıfırla
+                // Bu, content'in merkez noktasını viewport'un merkez noktasına hizalar
+                contentTransform.anchoredPosition = Vector2.zero;
+                
+                LogManager.Log($"Content expanded from {currentContentSize} to {newContentSize} for node at {nodePosition}");
+                LogManager.Log($"Content position reset to (0,0) for proper viewport centering");
+            }
+        }
+
+        /// <summary>
+        /// Content pozisyonunu viewport merkezine sıfırlar (hatalı pozisyonu düzeltmek için)
+        /// </summary>
+        public void ResetContentPosition()
+        {
+            if (contentTransform != null)
+            {
+                contentTransform.anchoredPosition = Vector2.zero;
+                LogManager.Log("Content position reset to (0,0) for proper viewport centering");
+            }
+        }
+
+        #endregion
+
         private void OnEnable()
         {
             Debug.Log($"GraphManager OnEnable: IsInitialized={_isInitialized}");
-            _filePath = Path.Combine(Application.persistentDataPath, "MyNodeGraph.xml");
             LineRenderer?.OnPopulateMeshAddListener(DrawConnections);
+            scaleValue = contentTransform.localScale.x;
+            
+            // ScenarioFileManager event'lerini bağla
+            SubscribeToFileManagerEvents();
+            
+            // Content pozisyonunu otomatik düzelt (dinamik büyüyen content için)
+            ResetContentPosition();
         }
 
         private void DrawConnections()
@@ -147,8 +298,9 @@ namespace Managers
             
         }
 
-
-
+        
+        //, INetworkObjectsService networkObjectsService, INetworkScenesService networkScenesService, ISessionClientsProvider sessionClientsProvider
+        
         [Inject]
         public void Construct(NodeConfig config, SystemManager systemManager,
             ConnectionPresenterFactory connectionPresenterFactory, NodePresenterFactory nodePresenterFactory,
@@ -174,7 +326,7 @@ namespace Managers
             _pointer = pointer.gameObject;
             _lineRenderer = lineRenderer;
             _objectFactory = objectFactory;
-            
+
             if (_lineRenderer == null)
             {
                 Debug.LogError("LTGLineRenderer null!");
@@ -189,6 +341,9 @@ namespace Managers
             Debug.Log("GraphManager initialized");
             CreateStartNode();
             CreateFinishNode();
+            
+            // Node'lar oluşturulduktan sonra content pozisyonunu düzelt
+            ResetContentPosition();
         }
 
         private void Initialize()
@@ -201,25 +356,21 @@ namespace Managers
             }
         }
 
-        private void Update()
-        {
-        }
 
         private void InitializePointer()
         {
             Debug.Log("Initializing Pointer...");
+            LogManager.Log("GRAPH: Initializing Pointer...");
 
-            // if (_pointer != null)
-            // {
-            //     Debug.LogWarning("Pointer already exists!");
-            //     return;
-            // }
-
-            // var pointerGO = new GameObject("Pointer");
-            // pointerGO.transform.SetParent(transform);
-            // var pointerComponent = pointerGO.AddComponent<Pointer>();
-            // _pointer = pointerGO;
             var pointerComponent = _pointer.GetComponent<Pointer>();
+            LogManager.Log($"GRAPH: Pointer component found: {pointerComponent != null}");
+            LogManager.Log($"GRAPH: Config available: {_config != null}");
+            
+            if (_config != null)
+            {
+                LogManager.Log($"GRAPH: Pointer sprites - Default: {(_config.defaultPointerSprite != null ? _config.defaultPointerSprite.name : "NULL")}, Drag: {(_config.dragPointerSprite != null ? _config.dragPointerSprite.name : "NULL")}");
+            }
+            
             // Config'den ikonları ve ayarları al
             pointerComponent.Initialize(
                 _config.pointerColor,
@@ -232,6 +383,7 @@ namespace Managers
             Pointer = pointerComponent;
 
             Debug.Log("Pointer initialized successfully");
+            LogManager.Log("GRAPH: Pointer initialized successfully");
         }
 
         private void InitializeCanvas()
@@ -260,6 +412,9 @@ namespace Managers
                     DestroyImmediate(pointerGO);
                 }
             }
+            
+            // Event'ları temizle
+            UnsubscribeFromFileManagerEvents();
         }
 
         public BaseNodePresenter InstantiateNode(BaseNodePresenter baseNodeTemplate, Vector3 position)
@@ -313,45 +468,57 @@ namespace Managers
             }
         }
 
+        public void RemoveSelectedObjects()
+        {
+            _systemManager.Selected3DObject.GetComponent<ObjectPresenter>().Remove();
+        }
+
 
         private void OnValidate()
         {
             InitializeCanvas();
         }
 
-        public BaseNodePresenter CreateNodeAtPosition(Vector2 position, NodeType nodeType)
+        public BaseNodePresenter CreateNodeAtPosition(Vector2 position, NodeType nodeType, BaseNode baseNode = null)
         {
-            var nodePresenter = CreateNodePresenter(position, nodeType);
-            
-            // Pozisyonu açıkça ayarla (factory'nin doğru ayarlamadığı durumlara karşı)
+            var nodePresenter = CreateNodePresenter(position, nodeType, baseNode);
+
+            //Pozisyonu açıkça ayarla (factory'nin doğru ayarlamadığı durumlara karşı)
             RectTransform rectTransform = nodePresenter.GetComponent<RectTransform>();
             if (rectTransform != null)
             {
                 rectTransform.anchoredPosition = position;
             }
-            
+
+            // Dinamik content genişletme kontrolü
+            if (ShouldExpandContentForNode(position))
+            {
+                ExpandContentForNode(position);
+            }
+
             switch (nodeType)
             {
                 case NodeType.Start:
                     StartNode = nodePresenter as StartNodePresenter;
                     _model.AddNode(nodePresenter);
                     return nodePresenter;
-                    
+
                 case NodeType.Finish:
                     FinishNode = nodePresenter as FinishNodePresenter;
-                    
+
                     _model.AddNode(nodePresenter);
                     return nodePresenter;
-                    
+
                 default:
                     _model.AddNode(nodePresenter);
                     return nodePresenter;
             }
         }
 
-        private BaseNodePresenter CreateNodePresenter(Vector2 position, NodeType nodeType)
+
+        private BaseNodePresenter CreateNodePresenter(Vector2 position, NodeType nodeType, BaseNode baseNode)
         {
-            var go = _nodePresenterFactory.Create(position, nodeType);
+            var go = _nodePresenterFactory.Create(position, nodeType, baseNode);
             _nodePresenters.Add(go);
             return go;
         }
@@ -360,7 +527,6 @@ namespace Managers
         {
             Vector2 center = Vector2.zero;
             CreateNodeAtPosition(center, nodeType);
-
         }
 
         public void CreateStartNode()
@@ -385,16 +551,18 @@ namespace Managers
                 if (connection != null && connection.gameObject != null)
                     Destroy(connection.gameObject);
             }
+
             _connectionPresenters.Clear();
-            
+
             // Node'ları temizle
             foreach (var node in _nodePresenters.ToList())
             {
                 if (node != null && node.gameObject != null)
                     Destroy(node.gameObject);
             }
+
             _nodePresenters.Clear();
-            
+
             // Başlangıç ve bitiş node referanslarını sıfırla
             StartNode = null;
             FinishNode = null;
@@ -430,13 +598,168 @@ namespace Managers
                 }
             }
         }
+
+        #region ScenarioFileManager Integration
+
+        private void SubscribeToFileManagerEvents()
+        {
+            ScenarioFileManager.OnSaveRequested += SaveGraphToFile;
+            ScenarioFileManager.OnLoadRequested += LoadGraphFromFile;
+        }
+
+        private void UnsubscribeFromFileManagerEvents()
+        {
+            ScenarioFileManager.OnSaveRequested -= SaveGraphToFile;
+            ScenarioFileManager.OnLoadRequested -= LoadGraphFromFile;
+        }
+
+        /// <summary>
+        /// Save Scenario butonuna basıldığında çağrılır - Popup'ı açar
+        /// </summary>
+        public void ShowSaveDialog()
+        {
+            if (_scenarioFileManager == null)
+            {
+                _scenarioFileManager = FindObjectOfType<ScenarioFileManager>();
+            }
+
+            if (_scenarioFileManager != null)
+            {
+                _scenarioFileManager.ShowSavePopup();
+            }
+            else
+            {
+                Debug.LogError("ScenarioFileManager bulunamadı! Lütfen sahneye ekleyin.");
+            }
+        }
+
+        /// <summary>
+        /// Load Scenario butonuna basıldığında çağrılır - Popup'ı açar
+        /// </summary>
+        public void ShowLoadDialog()
+        {
+            if (_scenarioFileManager == null)
+            {
+                _scenarioFileManager = FindObjectOfType<ScenarioFileManager>();
+            }
+
+            if (_scenarioFileManager != null)
+            {
+                _scenarioFileManager.ShowLoadPopup();
+            }
+            else
+            {
+                Debug.LogError("ScenarioFileManager bulunamadı! Lütfen sahneye ekleyin.");
+            }
+        }
+
+
+
+        /// <summary>
+        /// Belirtilen dosya yoluna senaryoyu kaydeder
+        /// </summary>
+        private void SaveGraphToFile(string filePath)
+        {
+            try
+            {
+                SaveFile saveFile = CreateSaveFile();
+                
+                XmlSerializer serializer = new XmlSerializer(typeof(SaveFile));
+                using (FileStream fs = new FileStream(filePath, FileMode.Create))
+                {
+                    serializer.Serialize(fs, saveFile);
+                }
+
+                LogManager.LogSuccess($"Senaryo kaydedildi: {Path.GetFileName(filePath)}");
+                Debug.Log($"Senaryo başarıyla kaydedildi: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                LogManager.LogError($"Senaryo kaydetme hatası: {ex.Message}");
+                Debug.LogError($"Senaryo kaydetme hatası: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Belirtilen dosya yolundan senaryoyu yükler
+        /// </summary>
+        private void LoadGraphFromFile(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    LogManager.LogError($"Dosya bulunamadı: {Path.GetFileName(filePath)}");
+                    return;
+                }
+
+                SaveFile saveFile;
+                XmlSerializer serializer = new XmlSerializer(typeof(SaveFile));
+                using (FileStream fs = new FileStream(filePath, FileMode.Open))
+                {
+                    saveFile = (SaveFile)serializer.Deserialize(fs);
+                }
+
+                LoadSaveFile(saveFile);
+                
+                LogManager.LogSuccess($"Senaryo yüklendi: {Path.GetFileName(filePath)}");
+                Debug.Log($"Senaryo başarıyla yüklendi: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                LogManager.LogError($"Senaryo yükleme hatası: {ex.Message}");
+                Debug.LogError($"Senaryo yükleme hatası: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Yeni senaryo oluşturur - tüm nodeları ve sahnedeki nesneleri temizler
+        /// </summary>
+        private void CreateNewScenario()
+        {
+            try
+            {
+                // Sahneyi temizle (geçici nesneleri sil)
+                ResetScene();
+                
+                // Tüm node'ları ve connection'ları temizle
+                Clear();
+                
+                // Start ve Finish node'larını yeniden oluştur
+                CreateStartNode();
+                CreateFinishNode();
+                
+                LogManager.LogSuccess("New scenario created successfully");
+                Debug.Log("New scenario created - all nodes and objects cleared");
+            }
+            catch (Exception ex)
+            {
+                LogManager.LogError($"New scenario creation error: {ex.Message}");
+                Debug.LogError($"New scenario creation error: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Eski API uyumluluğu için - Yeni sistemde ShowSaveDialog() kullanın
+        /// </summary>
+        [System.Obsolete("Use ShowSaveDialog() instead for better user experience")]
         public void SaveGraph()
+        {
+            ShowSaveDialog();
+        }
+
+        /// <summary>
+        /// SaveFile objesi oluşturur (dahili kullanım için)
+        /// </summary>
+        private SaveFile CreateSaveFile()
         {
             SaveFile saveFile = new SaveFile
             {
                 Nodes = new List<BaseNode>(),
+                Objects = new List<ObjectModel>(),
                 Connections = new List<ConnectionInfo>(),
-                SceneObjects = new List<SceneObjectInfo>()
             };
 
             // Node'ları kaydet
@@ -447,10 +770,10 @@ namespace Managers
                 var rectTransform = nodePresenter.GetComponent<RectTransform>();
                 model.PosX = rectTransform.anchoredPosition.x;
                 model.PosY = rectTransform.anchoredPosition.y;
-                
+
                 // Renk bilgilerini güncelle
                 model.Color = model.Color; // Setter ile bileşenleri günceller
-                
+
                 // Port bilgilerini güncelle
                 model.Ports.Clear();
                 foreach (var port in nodePresenter.Ports)
@@ -458,25 +781,25 @@ namespace Managers
                     // Port bilgilerini güncelle
                     port.Model.NodeID = model.ID;
                     port.Model.PolarityTypeString = port.Polarity.ToString();
-                    
+
                     // Port'u modelin portlarına ekle
                     model.Ports.Add(port.Model);
                 }
-                
+
                 // Event Port bilgilerini güncelle
                 foreach (var eventPort in nodePresenter.EventPorts)
                 {
                     // Event Port bilgilerini güncelle 
                     eventPort.Model.NodeID = model.ID;
                     eventPort.Model.PolarityTypeString = eventPort.Polarity.ToString();
-                    
+
                     // Event Port'u modelin portlarına ekle
                     model.Ports.Add(eventPort.Model);
                 }
-                
+
                 saveFile.Nodes.Add(model);
             }
-            
+
             // Connection'ları kaydet
             foreach (var connectionPresenter in _connectionPresenters)
             {
@@ -489,26 +812,75 @@ namespace Managers
             }
 
             SaveSceneObjects(saveFile);
-
-            XmlSerializer serializer = new XmlSerializer(typeof(SaveFile));
-            using (FileStream fs = new FileStream(_filePath, FileMode.Create))
-            {
-                serializer.Serialize(fs, saveFile);
-            }
-            Debug.Log("Kaydedilen dosya yolu: " + _filePath);
+            return saveFile;
         }
-        
+
+        private void SaveSceneObjects(SaveFile saveFile)
+        {
+            // VIROO_PrefabContainer altındaki nesneleri bul
+            Transform virooContainer = GameObject.Find("VIROO_PrefabContainer")?.transform;
+
+            if (virooContainer == null)
+            {
+                Debug.LogWarning("VIROO_PrefabContainer bulunamadı!");
+                return;
+            }
+
+            foreach (Transform child in virooContainer)
+            {
+                // ObjectPresenter componenti olan nesneleri kontrol et
+                var objectPresenter = child.GetComponent<ObjectPresenter>();
+                if (objectPresenter == null)
+                {
+                    Debug.LogWarning($"ObjectPresenter componenti bulunamadı: {child.name}");
+                    continue;
+                }
+
+                // Model bilgilerini güncelle
+                objectPresenter.TransformToModel();
+                
+                var model = objectPresenter.Model;
+                
+                if (model == null)
+                {
+                    Debug.LogWarning($"ObjectModel null: {child.name}");
+                    continue;
+                }
+
+                // ObjectType artık ObjectPresenter'da serialized field ile ayarlanıyor
+                if (model.ObjectType == ObjectType.Unknown)
+                {
+                    Debug.LogWarning($"ObjectType Unknown: {child.name} - Prefab'da ObjectType ayarlanmamış olabilir!");
+                }
+
+                // Model'i kaydet listesine ekle
+                saveFile.Objects.Add(model);
+
+                Debug.Log($"VIROO nesnesi kaydedildi: {model.Name}, ID: {model.ID}, Tip: {model.ObjectType}");
+            }
+
+            Debug.Log($"Toplam {saveFile.Objects.Count} VIROO nesnesi kaydedildi.");
+        }
+
+        // DetermineObjectType metodu artık kullanılmıyor
+        // ObjectType'lar artık ObjectPresenter'da serialized field ile ayarlanıyor
+
+        /// <summary>
+        /// Eski API uyumluluğu için - Yeni sistemde ShowLoadDialog() kullanın
+        /// </summary>
+        [System.Obsolete("Use ShowLoadDialog() instead for better user experience")]
         public void LoadGraph()
         {
-            if (!File.Exists(_filePath))
-                return;
+            ShowLoadDialog();
+        }
 
-            SaveFile saveFile;
-            XmlSerializer serializer = new XmlSerializer(typeof(SaveFile));
-            using (FileStream fs = new FileStream(_filePath, FileMode.Open))
-            {
-                saveFile = (SaveFile)serializer.Deserialize(fs);
-            }
+        /// <summary>
+        /// SaveFile'dan sahneyi yükler (dahili kullanım için)
+        /// </summary>
+        private void LoadSaveFile(SaveFile saveFile)
+        {
+            // Sahneyi temizle (leakage önleme)
+            ResetScene();
 
             // Tüm mevcut node'ları ve bağlantıları temizle
             Clear();
@@ -517,16 +889,18 @@ namespace Managers
             foreach (var nodeModel in saveFile.Nodes)
             {
                 NodeType nodeType = DetermineNodeType(nodeModel.GetType().Name);
+                
                 Vector2 position = new Vector2(nodeModel.PosX, nodeModel.PosY);
                 BaseNodePresenter nodePresenter = CreateNodeAtPosition(position, nodeType);
-                
+
                 // Node özelliklerini ayarla
                 nodePresenter.ID = nodeModel.ID;
                 nodePresenter.Model.ID = nodeModel.ID;
                 nodePresenter.Model.Title = nodeModel.Title;
                 nodePresenter.Model.Description = nodeModel.Description;
-                nodePresenter.Model.Color = new Color(nodeModel.ColorR, nodeModel.ColorG, nodeModel.ColorB, nodeModel.ColorA);
-                
+                nodePresenter.Model.Color =
+                    new Color(nodeModel.ColorR, nodeModel.ColorG, nodeModel.ColorB, nodeModel.ColorA);
+
                 // Node pozisyonunu ayarla (önemli)
                 RectTransform rectTransform = nodePresenter.GetComponent<RectTransform>();
                 if (rectTransform != null)
@@ -534,16 +908,19 @@ namespace Managers
                     rectTransform.anchoredPosition = position;
                 }
 
+                // Model verilerini presenter'a kopyala
+                CopyModelDataToPresenter(nodeModel, nodePresenter);
+
                 // Portları ayarla - ID'ye göre eşleştir
                 if (nodeModel.Ports != null && nodeModel.Ports.Count > 0)
                 {
-                    foreach(var portModel in nodeModel.Ports)
+                    foreach (var portModel in nodeModel.Ports)
                     {
                         // Önce normal portlarda ara
                         var portPresenter = nodePresenter.Ports.FirstOrDefault(
-                            p => p.Model.Name == portModel.Name && 
-                            p.Polarity.ToString() == portModel.PolarityTypeString);
-                        
+                            p => p.Model.Name == portModel.Name &&
+                                 p.Polarity.ToString() == portModel.PolarityTypeString);
+
                         if (portPresenter != null)
                         {
                             // Port ID'yi ayarla - bu kritik önemde!
@@ -558,12 +935,13 @@ namespace Managers
                                 // EventType'a göre eşleştirme yaparak ara
                                 var eventPortPresenter = nodePresenter.EventPorts.FirstOrDefault(
                                     p => p.EventType.ToString() == eventPortModel.EventType.ToString());
-                                    
+
                                 if (eventPortPresenter != null)
                                 {
                                     // Event Port ID'yi ayarla
                                     eventPortPresenter.Model.ID = portModel.ID;
-                                    Debug.Log($"EventPort eşleştirildi: {portModel.Name}, EventType: {eventPortModel.EventType}");
+                                    Debug.Log(
+                                        $"EventPort eşleştirildi: {portModel.Name}, EventType: {eventPortModel.EventType}");
                                 }
                                 else
                                 {
@@ -577,6 +955,9 @@ namespace Managers
                         }
                     }
                 }
+
+                // Model verilerini UI'ya senkronize et (eğer presenter bu metodları destekliyorsa)
+                SyncPresenterModelToUI(nodePresenter);
             }
 
             // Bağlantıları oluştur
@@ -584,15 +965,15 @@ namespace Managers
             {
                 var sourcePort = FindPortPresenterByID(connInfo.SourcePortID);
                 var targetPort = FindPortPresenterByID(connInfo.TargetPortID);
-                if(sourcePort != null && targetPort != null)
+                if (sourcePort != null && targetPort != null)
                     CreateConnection(sourcePort, targetPort);
             }
-            
+
             LoadSceneObjects(saveFile);
 
             UpdateConnectionsLine();
         }
-        
+
         private NodeType DetermineNodeType(string nodeTypeName)
         {
             switch (nodeTypeName)
@@ -603,202 +984,456 @@ namespace Managers
                 case "GrabNode": return NodeType.GrabNode;
                 case "WaitForNextNode": return NodeType.WaitForNextNode;
                 case "GetKeyDownNode": return NodeType.LookNode;
-                case "ActionNode": 
-                    // ActionNode.Type özelliğine bakarak gerçek NodeType'ı belirlemek gerekecek
-                    // Varsayılan olarak ChangeMaterialAction döndürelim
-                    return NodeType.ChangeMaterialAction;
+                case "LookNode": return NodeType.LookNode; // LookNode case'ini ekledim
+                case "LogicNode": return NodeType.LogicalOR; // LogicNode için Type property'sine bakmak gerekecek
+                case "ActionNode": return NodeType.ChangeMaterialAction; // Generic ActionNode için varsayılan
+                
+                // Özel action node sınıfları
+                case "AudioActionNode": return NodeType.PlaySoundAction;
+                case "VFXActionNode": return NodeType.VFXActionNode;
+                case "HighlightObjectActionNode": return NodeType.HighlightObjectActionNode;
+                case "ChangeMaterialActionNode": return NodeType.ChangeMaterialAction;
+                case "ChangePositionActionNode": return NodeType.ChangePositionAction;
+                case "ChangeRotationActionNode": return NodeType.ChangeRotationAction;
+                case "ChangeScaleActionNode": return NodeType.ChangeScaleAction;
+                case "ToggleObjectActionNode": return NodeType.ToggleObjectAction;
+                case "PlayAnimationActionNode": return NodeType.PlayAnimationAction;
+                case "RobotAnimationActionNode": return NodeType.RobotAnimationAction;
+                case "DescriptionActionNode": return NodeType.DescriptionActionNode;
+                case "WorldDescriptionActionNode": return NodeType.WorldDescriptionActionNode;
+                case "ToolTouchNode": return NodeType.ToolTouchNode;
+                
+                // Eski isimler (geriye dönük uyumluluk)
                 case "PlaySoundAction": return NodeType.PlaySoundAction;
-                case "ChangeMaterialAction": return NodeType.ChangeMaterialAction;
                 case "MoveObjectAction": return NodeType.ChangePositionAction;
-                case "ToggleObjectAction": return NodeType.ToggleObjectAction;
-                case "PlayAnimationAction": return NodeType.PlayAnimationAction;
+                
                 default: throw new ArgumentException($"Bilinmeyen node tipi: {nodeTypeName}");
             }
         }
-        
+
         public PortPresenter FindPortPresenterByID(string portID)
         {
-            foreach(var node in NodePresenters)
+            foreach (var node in NodePresenters)
             {
                 // Normal portları kontrol et
                 var port = node.Ports.FirstOrDefault(p => p.Model.ID == portID);
-                if(port != null) return port;
-                
+                if (port != null) return port;
+
                 // Event portlarını kontrol et
                 var eventPort = node.EventPorts.FirstOrDefault(p => p.Model.ID == portID);
-                if(eventPort != null) return eventPort;
+                if (eventPort != null) return eventPort;
             }
+
             return null;
         }
 
         public void ScaleUpGraph()
         {
-            Debug.Log("up");
-            foreach (BaseNodePresenter nodePresenter in _nodePresenters)
-            {
-                contentTransform.localScale += Vector3.one * .1f;
-            }
-            gridImage.pixelsPerUnitMultiplier -= .1f;
+            Debug.Log("Scale Up - Mevcut değer: " + scaleValue);
 
-
+            // %50 artış yap
+            float newScale = scaleValue * 1.5f;
             
+            // Maksimum sınırı kontrol et
+            if (newScale > maxScale)
+            {
+                newScale = maxScale;
+                Debug.Log("Maksimum scale değerine ulaşıldı: " + maxScale);
+                return;
+            }
+
+            // Yeni scale değerini uygula
+            Vector3 newScaleVector = Vector3.one * newScale;
+            contentTransform.localScale = newScaleVector;
+
+            // Grid görünümünü ters orantılı olarak ayarla
+            float gridMultiplier = 1f / newScale;
+            if (gridMultiplier >= 0.1f && gridMultiplier <= 10f)
+                gridImage.pixelsPerUnitMultiplier = gridMultiplier;
+
+            scaleValue = newScale;
+            scaleInput.text = scaleValue.ToString("F2");
+            scaleSlider.value = (scaleValue - minScale) / (maxScale - minScale);
+            
+            Debug.Log("Yeni scale değeri: " + scaleValue);
         }
+
         public void ScaleDownGraph()
         {
-            Debug.Log("Down");
-            foreach (BaseNodePresenter nodePresenter in _nodePresenters)
-            {
-                contentTransform.localScale -= Vector3.one * .1f;
-            }
-            gridImage.pixelsPerUnitMultiplier += .1f;
+            Debug.Log("Scale Down - Mevcut değer: " + scaleValue);
 
+            // %33 azalış yap (1/1.5 = 0.67 yaklaşık)
+            float newScale = scaleValue * 0.67f;
             
+            // Minimum sınırı kontrol et - sıfırın altına düşmemeli
+            if (newScale < 0.1f) // 0.1f minimum güvenli değer
+            {
+                newScale = 0.1f;
+                Debug.Log("Minimum scale değerine ulaşıldı: " + newScale);
+            }
+            
+            // MinScale kontrolü de yap
+            if (newScale < minScale)
+            {
+                newScale = minScale;
+                Debug.Log("MinScale sınırına ulaşıldı: " + minScale);
+            }
+
+            // Yeni scale değerini uygula
+            Vector3 newScaleVector = Vector3.one * newScale;
+            contentTransform.localScale = newScaleVector;
+
+            // Grid görünümünü ters orantılı olarak ayarla
+            float gridMultiplier = 1f / newScale;
+            if (gridMultiplier >= 0.1f && gridMultiplier <= 10f)
+                gridImage.pixelsPerUnitMultiplier = gridMultiplier;
+
+            scaleValue = newScale;
+            scaleInput.text = scaleValue.ToString("F2");
+            scaleSlider.value = (scaleValue - minScale) / (maxScale - minScale);
+            
+            Debug.Log("Yeni scale değeri: " + scaleValue);
         }
 
-       
-
-        private void SaveSceneObjects(SaveFile saveFile)
-        {
-            Transform scenarioArea = GameObject.Find("ScenarioArea")?.transform;
-            
-            if (scenarioArea == null)
-            {
-                Debug.LogWarning("ScenarioArea bulunamadı!");
-                return;
-            }
-            
-            foreach (Transform child in scenarioArea)
-            {
-                // Cube ve ObjectSpawnPosition nesnelerini hariç tut
-                if (child.name.StartsWith("Cube") || child.name == "ObjectSpawnPosition")
-                    continue;
-                
-                // Nesnenin tipini belirle
-                ObjectType objectType = DetermineObjectType(child.gameObject);
-                
-                SceneObjectInfo objInfo = new SceneObjectInfo
-                {
-                    ID = System.Guid.NewGuid().ToString(),
-                    Name = child.name,
-                    ObjectType = objectType,
-                    
-                    // Transform bilgileri
-                    PosX = child.position.x,
-                    PosY = child.position.y,
-                    PosZ = child.position.z,
-                    
-                    RotX = child.rotation.eulerAngles.x,
-                    RotY = child.rotation.eulerAngles.y,
-                    RotZ = child.rotation.eulerAngles.z,
-                    
-                    ScaleX = child.localScale.x,
-                    ScaleY = child.localScale.y,
-                    ScaleZ = child.localScale.z
-                };
-                
-                saveFile.SceneObjects.Add(objInfo);
-            }
-        }
-        
-        private ObjectType DetermineObjectType(GameObject obj)
-        {
-            // Nesne adını küçük harfe çevir
-            string objectName = obj.name.ToLower();
-            
-            // Tüm enum değerlerini otomatik olarak kontrol et
-            foreach (ObjectType type in System.Enum.GetValues(typeof(ObjectType)))
-            {
-                // Unknown değerini atla
-                if (type == ObjectType.Unknown)
-                    continue;
-                
-                // Enum adını al ve küçük harfe çevir
-                string enumName = type.ToString().ToLower();
-                
-                // Özel durum kontrolü - BrownDesk ve WhiteDesk için
-                if (type == ObjectType.BrownDesk && objectName.Contains("brown") && objectName.Contains("desk"))
-                    return type;
-                else if (type == ObjectType.WhiteDesk && objectName.Contains("white") && objectName.Contains("desk")) 
-                    return type;
-                // Normal kontrol - enum adı nesne adında geçiyor mu?
-                else if (objectName.Contains(enumName))
-                    return type;
-            }
-            
-            // Eşleşme bulunamadı, uyarı ver
-            Debug.LogWarning($"Bilinmeyen nesne tipi: {obj.name} - Hiçbir ObjectType ile eşleşmiyor.");
-            
-            // Bilinmeyen nesneler için Unknown kullan
-            return ObjectType.Unknown;
-        }
-        
         private void LoadSceneObjects(SaveFile saveFile)
         {
-            if (saveFile.SceneObjects == null || saveFile.SceneObjects.Count == 0)
+            if (saveFile.Objects == null || saveFile.Objects.Count == 0)
             {
-                Debug.Log("Yüklenecek 3D nesne yok.");
+                Debug.Log("Yüklenecek VIROO nesnesi yok.");
                 return;
             }
+
+            // VIROO_PrefabContainer'ı bul
+            Transform virooContainer = GameObject.Find("VIROO_PrefabContainer")?.transform;
+
+            if (virooContainer == null)
+                {
+                Debug.LogWarning("VIROO_PrefabContainer bulunamadı!");
+                return;
+                }
+
+            // Mevcut VIROO nesnelerini temizle
+            // ClearVIROOObjects();
+
+            Debug.Log($"VIROO buton tetikleme sistemi ile {saveFile.Objects.Count} nesne yükleniyor...");
+
+            // Her model için ilgili butonu tetikle
+            foreach (var model in saveFile.Objects)
+            {
+                TriggerObjectButtonByType(model.ObjectType);
+            }
+
+            // Coroutine başlat - oluşturulan nesneleri bekle ve model uygula
+            StartCoroutine(WaitAndApplyModels(saveFile.Objects));
+        }
+
+        private void TriggerObjectButtonByType(ObjectType objectType)
+        {
+            // ObjectType'a göre buton ismini belirle
+            string buttonName = GetButtonNameByObjectType(objectType);
+            
+            if (string.IsNullOrEmpty(buttonName))
+            {
+                Debug.LogWarning($"Buton adı bulunamadı: {objectType}");
+                return;
+            }
+
+            // Canvas hierarchy'sinde butonu bul: CanvasObjects > ObjectCanvas > Objects > Scroll View > Viewport > Content > GridHolder
+            var canvasObjects = GameObject.Find("CanvasObjects");
+            if (canvasObjects == null)
+            {
+                Debug.LogWarning("CanvasObjects bulunamadı!");
+                return;
+        }
+
+            var objectCanvas = canvasObjects.transform.Find("ObjectCanvas");
+            if (objectCanvas == null)
+            {
+                Debug.LogWarning("ObjectCanvas bulunamadı!");
+                return;
+            }
+
+            // Butonu GridHolder altında ara
+            var gridHolder = objectCanvas.Find("Objects/Scroll View/Viewport/Content/GridHolder");
+            if (gridHolder == null)
+            {
+                Debug.LogWarning("GridHolder bulunamadı!");
+                return;
+            }
+
+            // Butonu bul ve tetikle
+            var button = FindButtonInHierarchy(gridHolder, buttonName);
+            if (button != null)
+            {
+                Debug.Log($"Buton tetikleniyor: {buttonName} -> {objectType}");
+                button.onClick.Invoke();
+            }
+            else
+            {
+                Debug.LogWarning($"Buton bulunamadı: {buttonName}");
+            }
+        }
+
+        private string GetButtonNameByObjectType(ObjectType objectType)
+        {
+            // ObjectType enum değerini gerçek buton isimlerine çevir
+            // Bu isimler Unity hierarchy'sindeki GridHolder altındaki buton isimlerine karşılık gelir
+            switch (objectType)
+            {
+                case ObjectType.Robot: return "robot";
+                case ObjectType.Barrier: return "barrier";
+                case ObjectType.BrownDesk: return "brown_desk";
+                case ObjectType.EmergencyButton: return "button";
+                case ObjectType.Chair: return "chair";
+                case ObjectType.Chassis: return "chassis";
+                case ObjectType.Glasses: return "glasses";
+                case ObjectType.Gloves: return "gloves";
+                case ObjectType.Helmet: return "helmet";
+                case ObjectType.Kabinet: return "kabinet";
+                case ObjectType.Kawasaki: return "kawasaki-rc005L";
+                case ObjectType.WhiteDesk: return "white-desk";
+                case ObjectType.NightStand: return "nightstand";
+                case ObjectType.YellowLine: return "yellow-line";
+                case ObjectType.Capsule: return "capsule";
+                case ObjectType.Cube: return "cube";
+                case ObjectType.Cylinder: return "cylinder";
+                case ObjectType.Sphere: return "sphere";
+                case ObjectType.AllenWrench: return "allen-wrench";
+                case ObjectType.Multimeter: return "multimeter";
+                case ObjectType.Nipers: return "nipers";
+                case ObjectType.Pincers: return "pincers";
+                case ObjectType.Screwdriver: return "screwdriver";
+                case ObjectType.Wrench: return "wrench";
+                case ObjectType.ControlBox: return "control-box";
+                default:
+                    Debug.LogWarning($"Desteklenmeyen ObjectType: {objectType}");
+                    return null;
+                }
+        }
+
+        private UnityEngine.UI.Button FindButtonInHierarchy(Transform parent, string buttonName)
+        {
+            // Kendisini kontrol et
+            if (parent.name == buttonName)
+            {
+                var button = parent.GetComponent<UnityEngine.UI.Button>();
+                if (button != null) return button;
+            }
+
+            // Alt nesnelerde ara
+            foreach (Transform child in parent)
+            {
+                var result = FindButtonInHierarchy(child, buttonName);
+                if (result != null) return result;
+            }
+
+            return null;
+        }
+
+        private System.Collections.IEnumerator WaitAndApplyModels(List<ObjectModel> models)
+        {
+            // 2 saniye bekle - kullanıcının nesneleri oluşturması için
+            yield return new WaitForSeconds(2f);
+
+            Transform virooContainer = GameObject.Find("VIROO_PrefabContainer")?.transform;
+            if (virooContainer == null) yield break;
+
+            // Modelleri tipe göre grupla
+            var modelsByType = models.GroupBy(m => m.ObjectType).ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (Transform child in virooContainer)
+            {
+                var presenter = child.GetComponent<ObjectPresenter>();
+                if (presenter == null) continue;
+
+                // Bu nesnenin tipini presenter'dan al (artık prefab'da ayarlı)
+                ObjectType childType = presenter.Model.ObjectType;
                 
-            // ScenarioArea'yı bul
-            Transform scenarioArea = GameObject.Find("ScenarioArea")?.transform;
-            
-            if (scenarioArea == null)
+                // Bu tipte bekleyen model var mı?
+                if (modelsByType.ContainsKey(childType) && modelsByType[childType].Count > 0)
+                {
+                    // İlk modeli al ve uygula
+                    var model = modelsByType[childType][0];
+                    modelsByType[childType].RemoveAt(0);
+
+                    // XML'den okunan ID'yi koru (TouchNode için gerekli)
+                    string xmlID = model.ID;
+
+                    // Model'i presenter'a ata
+                    presenter.Model = model;
+                    
+                    // XML'den okunan ID'yi tekrar ata (NetworkObject ID'sini override et)
+                    presenter.Model.ID = xmlID;
+                    
+                    presenter.ModelToTransform();
+
+                    // İsmi güncelle
+                    child.gameObject.name = model.Name;
+
+                    Debug.Log($"VIROO nesnesi geri yüklendi: {model.Name}, XML ID: {xmlID}, Tip: {model.ObjectType}");
+            }
+            }
+
+            Debug.Log("VIROO nesnelerinin model bilgileri uygulandı!");
+
+            // VIROO nesneleri oluştuktan sonra tüm node'ların UI'larını tekrar senkronize et
+            foreach (var nodePresenter in _nodePresenters)
             {
-                Debug.LogWarning("ScenarioArea bulunamadı!");
+                SyncPresenterModelToUI(nodePresenter);
+            }
+            
+            Debug.Log("Node UI'ları VIROO nesneleri ile senkronize edildi!");
+        }
+
+        public void CreateCube()
+        {
+            // Geçici bir GameObject oluşturup sahneye koymadan transformunu kullan
+            var dummyGO = new GameObject("TempCubeSpawn");
+            dummyGO.transform.position = new Vector3(1, 1, 1);
+            dummyGO.transform.rotation = Quaternion.identity;
+
+            CreateObjectManually("cube", dummyGO.transform);
+
+            // Eğer sahnede bırakmak istemiyorsan hemen sil
+            Destroy(dummyGO);
+        }
+
+        
+        public void CreateObjectManually(string prefabId, Transform spawnTransform)
+        {
+            // Bu metod artık sadece buton tetikleme için kullanılabilir
+            // Direkt VIROO sistemini kullanmak için CreateCube gibi özel metodlar kullanın
+            
+            Debug.LogWarning("CreateObjectManually: Network servisleri mevcut değil. Alternatif olarak CreateCube() gibi metodları kullanın.");
+        }
+
+        /// <summary>
+        /// Model verilerini presenter'a kopyalar (load işlemi sırasında)
+        /// </summary>
+        private void CopyModelDataToPresenter(BaseNode model, BaseNodePresenter presenter)
+        {
+            try
+            {
+                // Presenter'ın model'ini değiştir
+                presenter.Model = model;
+                Debug.Log($"Model data kopyalandı: {presenter.GetType().Name}");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Model data kopyalanırken hata oluştu {presenter.GetType().Name}: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Presenter'ın SyncModelToUI metodunu reflection ile çağırır
+        /// </summary>
+        private void SyncPresenterModelToUI(BaseNodePresenter presenter)
+        {
+            try
+            {
+                // Reflection ile SyncModelToUI metodunu bul ve çağır
+                var syncMethod = presenter.GetType().GetMethod("SyncModelToUI");
+                if (syncMethod != null)
+                {
+                    syncMethod.Invoke(presenter, null);
+                    Debug.Log($"SyncModelToUI çağrıldı: {presenter.GetType().Name}");
+                }
+                else
+                {
+                    Debug.Log($"SyncModelToUI metodu bulunamadı: {presenter.GetType().Name}");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"SyncModelToUI çağrılırken hata oluştu {presenter.GetType().Name}: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Sahnedeki geçici nesneleri temizler (Load öncesi leakage önleme)
+        /// </summary>
+        private void ResetScene()
+        {
+            // WorldNotifierCanvas'ları temizle
+            ClearWorldNotifierCanvases();
+            
+            // VIROO nesnelerini temizle
+            ClearVIROOObjects();
+            
+            // Gelecekte başka geçici nesneler buraya eklenebilir:
+            // ClearTemporaryEffects();
+            // ClearDynamicAudio();
+            // vs.
+            
+            LogManager.LogInteraction("Scene reset completed - temporary objects cleared");
+        }
+
+        /// <summary>
+        /// VIROO_PrefabContainer altındaki ObjectPresenter'lı nesneleri temizler
+        /// </summary>
+        private void ClearVIROOObjects()
+        {
+            // VIROO_PrefabContainer'ı bul
+            Transform virooContainer = GameObject.Find("VIROO_PrefabContainer")?.transform;
+
+            if (virooContainer == null)
+            {
+                Debug.LogWarning("VIROO_PrefabContainer bulunamadı! ObjectPresenter nesneleri temizlenemedi.");
                 return;
             }
-            
-            // Mevcut dinamik nesneleri temizle (Cube ve ObjectSpawnPosition hariç)
+
+            // Mevcut dinamik nesneleri temizle (VIROO_PrefabContainer altındaki)
             List<Transform> toDestroy = new List<Transform>();
-            foreach (Transform child in scenarioArea)
+            foreach (Transform child in virooContainer)
             {
-                if (!child.name.StartsWith("Cube") && child.name != "ObjectSpawnPosition")
+                // ObjectPresenter componenti olan nesneleri işaretle
+                if (child.GetComponent<ObjectPresenter>() != null)
+                {
                     toDestroy.Add(child);
+                }
             }
-            
+
             foreach (var child in toDestroy)
             {
-                DestroyImmediate(child.gameObject);
+                if (child != null && child.gameObject != null)
+                {
+                    DestroyImmediate(child.gameObject);
+                }
             }
-            
-            // Kaydedilen nesneleri yükle
-            foreach (var objInfo in saveFile.SceneObjects)
+
+            if (toDestroy.Count > 0)
             {
-                // Unknown tipindeki nesneleri atla
-                if (objInfo.ObjectType == ObjectType.Unknown)
+                LogManager.LogSuccess($"Cleared {toDestroy.Count} VIROO objects with ObjectPresenter");
+                Debug.Log($"✅ VIROO nesneleri temizlendi: {toDestroy.Count} nesne silindi");
+            }
+            else
+            {
+                Debug.Log("VIROO_PrefabContainer'da silinecek ObjectPresenter nesnesi bulunamadı");
+            }
+        }
+
+        /// <summary>
+        /// Sahnedeki tüm WorldNotifierCanvas clone'larını temizler
+        /// </summary>
+        private void ClearWorldNotifierCanvases()
+        {
+            // "WorldNotifierCanvas(Clone)" isimli nesneleri bul ve temizle
+            var worldCanvases = GameObject.FindObjectsOfType<GameObject>()
+                .Where(go => go.name.Contains("WorldNotifierCanvas") && go.name.Contains("Clone"))
+                .ToArray();
+
+            foreach (var canvas in worldCanvases)
+            {
+                if (canvas != null)
                 {
-                    Debug.LogWarning($"Unknown tipindeki nesne yüklenmedi: {objInfo.Name}");
-                    continue;
+                    LogManager.LogInteraction($"Destroying WorldNotifierCanvas: {canvas.name}");
+                    DestroyImmediate(canvas);
                 }
-                
-                // ObjectFactory kullanarak nesneyi oluştur
-                if (_objectFactory == null)
-                {
-                    Debug.LogError("ObjectFactory null! Nesne oluşturulamadı.");
-                    continue;
-                }
-                
-                GameObject newObj = _objectFactory.Create(objInfo.ObjectType);
-                
-                if (newObj == null)
-                {
-                    Debug.LogError($"Nesne oluşturulamadı: {objInfo.Name}, Tip: {objInfo.ObjectType}");
-                    continue;
-                }
-                
-                // İsmi ayarla
-                newObj.name = objInfo.Name;
-                
-                // Transform ayarla
-                newObj.transform.position = new Vector3(objInfo.PosX, objInfo.PosY, objInfo.PosZ);
-                newObj.transform.rotation = Quaternion.Euler(objInfo.RotX, objInfo.RotY, objInfo.RotZ);
-                newObj.transform.localScale = new Vector3(objInfo.ScaleX, objInfo.ScaleY, objInfo.ScaleZ);
-                
-                // ScenarioArea'ya parent olarak ayarla
-                newObj.transform.SetParent(scenarioArea);
-                
-                Debug.Log($"3D Nesne yüklendi: {objInfo.Name}, Tip: {objInfo.ObjectType}");
+            }
+
+            if (worldCanvases.Length > 0)
+            {
+                LogManager.LogSuccess($"Cleared {worldCanvases.Length} WorldNotifierCanvas instances");
             }
         }
     }

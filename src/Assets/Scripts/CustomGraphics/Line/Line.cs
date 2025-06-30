@@ -104,7 +104,16 @@ namespace CustomGraphics
                 Vector2 p1 = points[t.Item1 + 1];
                 float ppDistance = Vector2.Distance(p0, p1);
 
-                Vector2 position = Vector2.Lerp(p0, p1, ((pos01 * length) - t.Item2) / ppDistance);
+                Vector2 position;
+                if (ppDistance == 0)
+                {
+                    position = p0; // Eğer noktalar üst üsteyse, pozisyonu direkt olarak p0 ata.
+                }
+                else
+                {
+                    // Mesafe sıfır değilse, güvenli bir şekilde hesaplama yap.
+                    position = Vector2.Lerp(p0, p1, ((pos01 * length) - t.Item2) / ppDistance);
+                }
                 float angle = Mathf.Atan2(p0.y - p1.y, p0.x - p1.x) + _deg2Rad90;
 
                 return new System.Tuple<Vector2, float>(position, angle);

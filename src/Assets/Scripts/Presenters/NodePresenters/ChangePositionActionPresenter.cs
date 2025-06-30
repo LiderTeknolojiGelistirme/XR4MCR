@@ -15,12 +15,15 @@ namespace Presenters.NodePresenters
     public class ChangePositionActionPresenter : ActionNodePresenter
     {
         [HideInInspector] public GameObject _simpleInteractable;
-
-        [SerializeField] private GameObject selectTargetGhostPrefab;
+        
+        // Child seçim modu (GrabNodePresenter'dan exact copy)
+        private bool _isChildSelectionMode = false;
+        
         [SerializeField] private TMP_InputField selectObjectInputField;
         [SerializeField] private Button selectObjectButton;
-        [SerializeField] private TMP_InputField selectTargetInputField;
         [SerializeField] private Button selectTargetButton;
+        [SerializeField] private Button selectChildObjectButton;
+        [SerializeField] private TMP_Text childStatusText;
         [SerializeField] private TMP_InputField durationInputField;
         [SerializeField] private Button durationIncreaseButton;
         [SerializeField] private Button durationDecreaseButton;
@@ -29,16 +32,28 @@ namespace Presenters.NodePresenters
         private bool _holdingTarget = false;
         private int _duration = 0;
 
+        public ChangePositionActionNode ChangePositionModel => Model as ChangePositionActionNode;
 
         protected override void Awake()
         {
-            LogManager.LogSuccess("ChangePositionActionPresenter başlatıldı: " + gameObject.name);
+            base.Awake();
+            LogManager.LogSuccess("ChangePositionActionPresenter started: " + gameObject.name);
+        }
+
+        private void Start()
+        {
+            // Description'ı sadece boşsa set et (Load'dan gelen değeri korumak için)
+            if (string.IsNullOrEmpty(Model.Description))
+            {
+                Model.Description = "Move the selected object to the target position";
+            }
         }
 
         private void OnEnable()
         {
             selectObjectButton.onClick.AddListener(OnSelectObject);
             selectTargetButton.onClick.AddListener(OnSelectTarget);
+            selectChildObjectButton?.onClick.AddListener(OnSelectChildObject);
             durationIncreaseButton.onClick.AddListener(OnIncreaseDuration);
             durationDecreaseButton.onClick.AddListener(OnDecreaseDuration);
         }
@@ -47,6 +62,7 @@ namespace Presenters.NodePresenters
         {
             selectObjectButton.onClick.RemoveAllListeners();
             selectTargetButton.onClick.RemoveAllListeners();
+            selectChildObjectButton?.onClick.RemoveAllListeners();
             durationIncreaseButton.onClick.RemoveAllListeners();
             durationDecreaseButton.onClick.RemoveAllListeners();
             if (_instantiatedTargetGhostGameObject != null)
@@ -68,6 +84,16 @@ namespace Presenters.NodePresenters
                     Debug.Log(parent.name);
                     _instantiatedTargetGhostGameObject.transform.parent = parent;
                     _holdingTarget = false;
+                    
+                    // Target pozisyonunu model'e kaydet
+                    if (ChangePositionModel != null)
+                    {
+                        ChangePositionModel.TargetPosX = _instantiatedTargetGhostGameObject.transform.position.x;
+                        ChangePositionModel.TargetPosY = _instantiatedTargetGhostGameObject.transform.position.y;
+                        ChangePositionModel.TargetPosZ = _instantiatedTargetGhostGameObject.transform.position.z;
+                        ChangePositionModel.HasTargetPosition = true;
+                        LogManager.LogSuccess($"Target position saved: {_instantiatedTargetGhostGameObject.transform.position}");
+                    }
                 }
             }
         }
@@ -75,62 +101,769 @@ namespace Presenters.NodePresenters
 
         protected override void PerformAction()
         {
-            Sequence sequence = DOTween.Sequence();
-            sequence.Append(
-                _simpleInteractable.transform.DOMove(_instantiatedTargetGhostGameObject.transform.position, _duration));
-            
-             sequence.Play();
+            if (_simpleInteractable != null && _instantiatedTargetGhostGameObject != null)
+            {
+                GameObject objectToMove = _simpleInteractable;
+                
+                // Eğer child object seçilmişse, child object'i hareket ettir
+                if (ChangePositionModel != null && ChangePositionModel.IsChildObjectEnabled && !string.IsNullOrEmpty(ChangePositionModel.SelectedChildName))
+                {
+                    Transform childTransform = FindChildByNameRecursive(_simpleInteractable.transform, ChangePositionModel.SelectedChildName);
+                    if (childTransform != null)
+                    {
+                        objectToMove = childTransform.gameObject;
+                        LogManager.Log($"Moving child object: {childTransform.name}");
+                    }
+                    else
+                    {
+                        LogManager.LogWarning($"Child object not found: {ChangePositionModel.SelectedChildName}");
+                        return; // Child bulunamazsa hareket ettirme
+                    }
+                }
+                else
+                {
+                    LogManager.Log($"Moving parent object: {_simpleInteractable.name}");
+                }
+
+                // Model'den duration değerini al
+                int duration = ChangePositionModel?.Duration ?? _duration;
+                
+                Sequence sequence = DOTween.Sequence();
+                sequence.Append(
+                    objectToMove.transform.DOMove(_instantiatedTargetGhostGameObject.transform.position, duration));
+                
+                sequence.Play();
+                
+                string movedObjectName = ChangePositionModel?.IsChildObjectEnabled == true ? 
+                    ChangePositionModel.SelectedChildName : _simpleInteractable.name;
+                
+                LogManager.LogSuccess($"Change position action started - Object: {movedObjectName}, Duration: {duration}s");
+            }
+            else
+            {
+                LogManager.LogWarning("ChangePosition: Missing selected object or target position for action");
+            }
         }
 
         private void OnSelectObject()
         {
+            LogManager.LogInteraction("Select object button clicked");
+            
             try
             {
-                _simpleInteractable = SystemManager.Selected3DObject;
+                // SystemManager.Selected3DObject null kontrolü
+                if (SystemManager.Selected3DObject == null)
+                {
+                    LogManager.LogError("Error selecting object: No object selected");
+                    return;
+                }
+
+                // Child seçim modundaysa child seçimi yap (GrabNodePresenter exact copy)
+                if (_isChildSelectionMode)
+                {
+                    SelectChild(SystemManager.Selected3DObject);
+                    return;
+                }
+
+                // Parent seçimi (GrabNodePresenter exact copy)
+                SetParentObject(SystemManager.Selected3DObject);
             }
             catch (Exception e)
             {
+                LogManager.LogError($"Error selecting object: {e.Message}");
                 Debug.LogException(e);
-                throw;
+            }
+        }
+
+        private void SetParentObject(GameObject selectedObject)
+        {
+            // ObjectPresenter'ı al (VIROO nesnelerinde olması gerekir)
+            var objectPresenter = selectedObject.GetComponent<ObjectPresenter>();
+            if (objectPresenter == null)
+            {
+                LogManager.LogError("Error selecting object: Selected object does not have ObjectPresenter component");
+                return;
             }
 
-            selectObjectInputField.text = _simpleInteractable.name;
+            if (_simpleInteractable == null)
+            {
+                _simpleInteractable = selectedObject;
+            }
+            else
+            {
+                // Eski target ghost'u temizle
+                if (_instantiatedTargetGhostGameObject != null)
+                {
+                    Destroy(_instantiatedTargetGhostGameObject);
+                    _instantiatedTargetGhostGameObject = null;
+                }
+                _simpleInteractable = selectedObject;
+            }
+
+            selectTargetButton.interactable = true;
+
+            // Input field'ı güncelle
+            if (selectObjectInputField != null)
+            {
+                selectObjectInputField.text = _simpleInteractable.name;
+            }
+
+            // Model'i güncelle - Parent nesneyi seç
+            if (ChangePositionModel != null)
+            {
+                ChangePositionModel.SelectedObjectName = _simpleInteractable.name;
+                ChangePositionModel.SelectedObjectID = objectPresenter.Model.ID; // Parent'ın ID'si
+                ChangePositionModel.SelectedChildIndex = -1; // Parent seçili
+                ChangePositionModel.SelectedChildName = null; // Child name'ini temizle
+                ChangePositionModel.IsChildObjectEnabled = false; // Child devre dışı
+                
+                // Yeni nesne seçildiğinde eski target pozisyonunu temizle
+                ChangePositionModel.HasTargetPosition = false;
+                ChangePositionModel.TargetPosX = 0f;
+                ChangePositionModel.TargetPosY = 0f;
+                ChangePositionModel.TargetPosZ = 0f;
+            }
+
+            // Target ghost nesnesini güncelle (eğer zaten varsa)
+            if (_instantiatedTargetGhostGameObject != null)
+            {
+                var interactionHelper = _simpleInteractable.GetComponent<InteractionHelper>();
+                if (interactionHelper?.targetGhostPrefab != null)
+                {
+                    var go = Instantiate(interactionHelper.targetGhostPrefab, GameObject.Find("Root").transform);
+                    go.transform.position = _instantiatedTargetGhostGameObject.transform.position;
+                    go.transform.rotation = _instantiatedTargetGhostGameObject.transform.rotation;
+                    go.transform.localScale = _instantiatedTargetGhostGameObject.transform.localScale;
+                    Destroy(_instantiatedTargetGhostGameObject);
+                    _instantiatedTargetGhostGameObject = go;
+                }
+            }
+            
+            if (selectChildObjectButton != null)
+            {
+                selectChildObjectButton.interactable = true;
+            }
+
+            // Child status text'ini güncelle
+            UpdateChildStatusText();
+
+            LogManager.LogSuccess($"Parent object selected: {_simpleInteractable.name} (ID: {objectPresenter.Model.ID})");
         }
 
 
+        public void OnSelectChildObject()
+        {
+            if (_simpleInteractable == null)
+            {
+                LogManager.LogError("No parent object selected. Please select a parent object first.");
+                return;
+            }
+
+            if (_simpleInteractable.transform.parent.name != "VIROO_PrefabContainer")
+            {
+                LogManager.LogError("Selected object is not under VIROO_PrefabContainer.");
+                return;
+            }
+
+            // Child nesneleri kontrol et
+            if (_simpleInteractable.transform.childCount == 0)
+            {
+                LogManager.LogError("Selected object has no child objects.");
+                return;
+            }
+
+            // Child seçim modunu aktif et (GrabNodePresenter exact copy)
+            _isChildSelectionMode = true;
+
+            // Parent'ın collider'ını devre dışı bırak
+            var parentCollider = _simpleInteractable.GetComponent<Collider>();
+            if (parentCollider != null)
+            {
+                parentCollider.enabled = false;
+            }
+
+            // Tüm child'ların collider'larını aktif et (seçim için)
+            for (int i = 0; i < _simpleInteractable.transform.childCount; i++)
+            {
+                var childCollider = _simpleInteractable.transform.GetChild(i).GetComponent<Collider>();
+                if (childCollider != null)
+                {
+                    childCollider.enabled = true;
+                }
+            }
+
+            LogManager.LogInteraction("Child selection mode activated. Please select a child object.");
+        }
+
+        private void SelectChild(GameObject selectedObject)
+        {
+            if (_simpleInteractable == null)
+            {
+                LogManager.LogError("No parent object selected.");
+                return;
+            }
+
+            // Parent'ın ObjectPresenter'ını al
+            var parentObjectPresenter = _simpleInteractable.GetComponent<ObjectPresenter>();
+            if (parentObjectPresenter == null)
+            {
+                LogManager.LogError("Parent object does not have ObjectPresenter component.");
+                return;
+            }
+
+            // Seçilen nesnenin parent hierarchy'sinde olup olmadığını recursive olarak kontrol et (GrabNodePresenter exact copy)
+            Transform selectedChild = FindChildInHierarchy(_simpleInteractable.transform, selectedObject);
+            
+            if (selectedChild == null)
+            {
+                LogManager.LogError("Selected object is not found in the parent hierarchy.");
+                return;
+            }
+
+            // Configuration zamanında collider'ları restore et (parent açık, child'lar edit için açık) (GrabNodePresenter exact copy)
+            RestoreConfigurationColliders(_simpleInteractable.transform);
+
+            // Model'i güncelle - child bilgilerini güncelle (GrabNodePresenter exact copy)
+            if (ChangePositionModel != null)
+            {
+                // SelectedObjectName ve SelectedObjectID parent olarak kalır, değişmez
+                ChangePositionModel.SelectedChildName = selectedChild.name; // Child name'ini kaydet
+                ChangePositionModel.IsChildObjectEnabled = true; // Child seçimi etkin
+                
+                // Index'i de güncelle (backward compatibility için)
+                for (int i = 0; i < _simpleInteractable.transform.childCount; i++)
+                {
+                    if (_simpleInteractable.transform.GetChild(i) == selectedChild)
+                    {
+                        ChangePositionModel.SelectedChildIndex = i;
+                        break;
+                    }
+                }
+                
+                // Yeni child seçildiğinde eski target pozisyonunu temizle
+                ChangePositionModel.HasTargetPosition = false;
+                ChangePositionModel.TargetPosX = 0f;
+                ChangePositionModel.TargetPosY = 0f;
+                ChangePositionModel.TargetPosZ = 0f;
+            }
+
+            // Input field'ı güncelle - parent name'i göster (GrabNodePresenter exact copy)
+            if (selectObjectInputField != null)
+            {
+                selectObjectInputField.text = $"{parentObjectPresenter.gameObject.name} -> {selectedChild.name}";
+            }
+
+            // Child seçim modunu kapat
+            _isChildSelectionMode = false;
+
+            // Child status text'ini güncelle (GrabNodePresenter exact copy)  
+            UpdateChildStatusText();
+
+            LogManager.LogInteraction($"Child object selected: {selectedChild.name} (Name: {selectedChild.name}, Parent ID: {parentObjectPresenter.Model.ID})");
+        }
+
         private void OnSelectTarget()
         {
+            LogManager.LogInteraction("Select target position button clicked");
+            
+            if (_simpleInteractable == null)
+            {
+                LogManager.LogWarning("No object selected for positioning");
+                return;
+            }
+
+            var interactionHelper = _simpleInteractable.GetComponent<InteractionHelper>();
+            if (interactionHelper == null)
+            {
+                LogManager.LogError($"Selected object {_simpleInteractable.name} does not have InteractionHelper component");
+                return;
+            }
+
+            if (interactionHelper.targetGhostPrefab == null)
+            {
+                LogManager.LogError($"InteractionHelper on {_simpleInteractable.name} does not have targetGhostPrefab assigned");
+                return;
+            }
+
             if (_instantiatedTargetGhostGameObject == null)
             {
-                _instantiatedTargetGhostGameObject =
-                    Instantiate(selectTargetGhostPrefab, XRInputManager.xrRayInteractor.transform);
-                selectTargetInputField.text = _instantiatedTargetGhostGameObject.name;
+                _instantiatedTargetGhostGameObject = Instantiate(
+                    interactionHelper.targetGhostPrefab, 
+                    XRInputManager.xrRayInteractor.transform);
+                
                 _holdingTarget = true;
+                LogManager.LogSuccess("Target position selection started");
             }
             else
             {
                 _instantiatedTargetGhostGameObject.transform.SetParent(XRInputManager.xrRayInteractor.transform);
                 _instantiatedTargetGhostGameObject.transform.localPosition = Vector3.zero;
                 _holdingTarget = true;
+                LogManager.LogSuccess("Target position selection restarted");
             }
         }
 
         private void OnIncreaseDuration()
         {
+            LogManager.LogInteraction("Increase duration button clicked");
+            
             _duration++;
             durationInputField.text = _duration.ToString();
+            
+            // Model'e kaydet
+            if (ChangePositionModel != null)
+            {
+                ChangePositionModel.Duration = _duration;
+            }
+            
+            LogManager.LogSuccess($"Duration increased: {_duration}");
         }
 
         private void OnDecreaseDuration()
         {
+            LogManager.LogInteraction("Decrease duration button clicked");
+            
             if (_duration > 0)
             {
                 _duration--;
                 durationInputField.text = _duration.ToString();
+                
+                // Model'e kaydet
+                if (ChangePositionModel != null)
+                {
+                    ChangePositionModel.Duration = _duration;
+                }
+                
+                LogManager.LogSuccess($"Duration decreased: {_duration}");
             }
-            
+            else
+            {
+                LogManager.LogWarning("Duration cannot be less than 0");
+            }
         }
         
-        
+        /// <summary>
+        /// Model'deki değerleri UI'ya aktarır (yükleme sonrası)
+        /// </summary>
+        public override void SyncModelToUI()
+        {
+            // Önce base sınıfın ortak özelliklerini sync et
+            base.SyncModelToUI();
+            
+            if (ChangePositionModel == null) return;
+
+            // Duration'ı restore et
+            _duration = ChangePositionModel.Duration;
+            if (durationInputField != null)
+            {
+                durationInputField.text = _duration.ToString();
+            }
+
+            // Seçili nesneyi restore et
+            RestoreSelectedObject();
+
+            // Child status text'ini güncelle
+            UpdateChildStatusText();
+
+            LogManager.LogSuccess($"ChangePosition UI synced - Selected: {ChangePositionModel.SelectedObjectName}, ChildName: {ChangePositionModel.SelectedChildName}, Duration: {ChangePositionModel.Duration}");
+        }
+
+        private void RestoreSelectedObject()
+        {
+            if (string.IsNullOrEmpty(ChangePositionModel.SelectedObjectID)) return;
+
+            GameObject selectedObject = FindObjectByID(ChangePositionModel.SelectedObjectID);
+            if (selectedObject == null)
+            {
+                LogManager.LogWarning($"ChangePosition: Could not find object with ID: {ChangePositionModel.SelectedObjectID}");
+                return;
+            }
+
+            // Nesneyi ayarla
+            SetSelectedObject(selectedObject);
+        }
+
+        private void SetSelectedObject(GameObject parentObject)
+        {
+            _simpleInteractable = parentObject;
+            selectTargetButton.interactable = true;
+            
+            if (selectChildObjectButton != null)
+            {
+                selectChildObjectButton.interactable = true;
+            }
+
+            // Child seçimi varsa onu ayarla (GrabNodePresenter exact copy)
+            if (ChangePositionModel.IsChildObjectEnabled && !string.IsNullOrEmpty(ChangePositionModel.SelectedChildName))
+            {
+                Transform childTransform = FindChildByNameRecursive(parentObject.transform, ChangePositionModel.SelectedChildName);
+                if (childTransform != null)
+                {
+                    // Input field'ını güncelle - parent -> child
+                    if (selectObjectInputField != null)
+                    {
+                        selectObjectInputField.text = $"{parentObject.name} -> {childTransform.name}";
+                    }
+                    
+                    // Child status text'ini güncelle (GrabNodePresenter exact copy)
+                    UpdateChildStatusText();
+                    
+                    LogManager.LogSuccess($"ChangePosition: Child object restored: {childTransform.name} (Parent ID: {ChangePositionModel.SelectedObjectID})");
+                }
+                else
+                {
+                    LogManager.LogWarning($"ChangePosition: Could not find child object: {ChangePositionModel.SelectedChildName}");
+                    
+                    // Child bulunamazsa parent moduna geri dön
+                    if (ChangePositionModel != null)
+                    {
+                        ChangePositionModel.IsChildObjectEnabled = false;
+                        ChangePositionModel.SelectedChildName = null;
+                        ChangePositionModel.SelectedChildIndex = -1;
+                    }
+                    
+                    if (selectObjectInputField != null)
+                    {
+                        selectObjectInputField.text = parentObject.name;
+                    }
+                    
+                    // Child status text'ini güncelle (GrabNodePresenter exact copy)
+                    UpdateChildStatusText();
+                }
+            }
+            else
+            {
+                // Parent modu
+                if (selectObjectInputField != null)
+                {
+                    selectObjectInputField.text = parentObject.name;
+                }
+                
+                // Child status text'ini güncelle (GrabNodePresenter exact copy)
+                UpdateChildStatusText();
+                
+                LogManager.LogSuccess($"ChangePosition: Parent object restored: {parentObject.name} (ID: {ChangePositionModel.SelectedObjectID})");
+            }
+
+            // Target pozisyonunu restore et
+            if (ChangePositionModel.HasTargetPosition)
+            {
+                Vector3 targetPosition = new Vector3(ChangePositionModel.TargetPosX, ChangePositionModel.TargetPosY, ChangePositionModel.TargetPosZ);
+                
+                var interactionHelper = _simpleInteractable.GetComponent<InteractionHelper>();
+                if (interactionHelper != null && interactionHelper.targetGhostPrefab != null)
+                {
+                    // Eski target ghost varsa temizle
+                    if (_instantiatedTargetGhostGameObject != null)
+                    {
+                        Destroy(_instantiatedTargetGhostGameObject);
+                    }
+                    
+                    // Yeni target ghost oluştur ve pozisyonunu ayarla
+                    _instantiatedTargetGhostGameObject = Instantiate(
+                        interactionHelper.targetGhostPrefab,
+                        GameObject.Find("Root").transform);
+                    _instantiatedTargetGhostGameObject.transform.position = targetPosition;
+                    
+                    LogManager.LogSuccess($"ChangePosition: Target ghost restored at position: {targetPosition}");
+                }
+                else
+                {
+                    LogManager.LogError($"ChangePosition: InteractionHelper or targetGhostPrefab not found on {_simpleInteractable.name}");
+                }
+            }
+            else
+            {
+                LogManager.Log($"ChangePosition: No target position to restore for {ChangePositionModel.SelectedObjectName}");
+            }
+        }
+
+        /// <summary>
+        /// Sahne içindeki nesneleri ObjectModel.ID ile bulur
+        /// </summary>
+        private GameObject FindObjectByID(string objectID)
+        {
+            if (string.IsNullOrEmpty(objectID)) return null;
+
+            // Sahne içindeki tüm ObjectPresenter'ları bul
+            ObjectPresenter[] allObjectPresenters = FindObjectsByType<ObjectPresenter>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            
+            foreach (var objectPresenter in allObjectPresenters)
+            {
+                if (objectPresenter.Model != null && objectPresenter.Model.ID == objectID)
+                {
+                    return objectPresenter.gameObject;
+                }
+            }
+            
+            return null;
+        }
+
+        // GrabNodePresenter'dan entegre edilen child utility metodları (exact copy)
+        private Transform FindChildInHierarchy(Transform parent, GameObject target)
+        {
+            // Önce direct child'lara bak
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform child = parent.GetChild(i);
+                if (child.gameObject == target)
+                {
+                    return child;
+                }
+            }
+
+            // Direct child'larda bulunamazsa recursive olarak alt seviyeye in
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform child = parent.GetChild(i);
+                Transform result = FindChildInHierarchy(child, target);
+                if (result != null)
+                {
+                    return result; // Alt seviyede bulunduysa onu döndür
+                }
+            }
+
+            return null; // Bulunamadı
+        }
+
+        private void SetChildCollidersState(Transform parent, Transform targetChild)
+        {
+            // Parent'ın collider'ını devre dışı bırak
+            var parentCollider = parent.GetComponent<Collider>();
+            if (parentCollider != null) parentCollider.enabled = false;
+
+            // Tüm child'ları recursive olarak tara ve sadece target child'ı aktif et
+            SetCollidersRecursive(parent, targetChild);
+        }
+
+        private void SetCollidersRecursive(Transform current, Transform targetChild)
+        {
+            // Mevcut nesnenin collider'ını kontrol et
+            var collider = current.GetComponent<Collider>();
+            if (collider != null)
+            {
+                collider.enabled = (current == targetChild);
+            }
+
+            // Child'ları için recursive çağrı
+            for (int i = 0; i < current.childCount; i++)
+            {
+                SetCollidersRecursive(current.GetChild(i), targetChild);
+            }
+        }
+
+        private void RestoreConfigurationColliders(Transform parent)
+        {
+            // Configuration zamanında: parent açık, child'lar kapalı
+            // Bu sayede karışıklık olmaz ve normal parent seçimi yapılabilir
+            
+            // Parent collider'ı aç
+            var parentCollider = parent.GetComponent<Collider>();
+            if (parentCollider != null)
+            {
+                parentCollider.enabled = true;
+            }
+
+            // Tüm child collider'ları kapat (configuration modu)
+            DisableChildCollidersRecursive(parent);
+        }
+
+        private void EnableChildCollidersRecursive(Transform current)
+        {
+            // Mevcut nesnenin child'larını kontrol et
+            for (int i = 0; i < current.childCount; i++)
+            {
+                Transform child = current.GetChild(i);
+                
+                // Child'ın collider'ını aç
+                var childCollider = child.GetComponent<Collider>();
+                if (childCollider != null)
+                {
+                    childCollider.enabled = true;
+                }
+
+                // Alt seviyedeki child'lar için recursive çağrı
+                EnableChildCollidersRecursive(child);
+            }
+        }
+
+        private void DisableChildCollidersRecursive(Transform current)
+        {
+            // Mevcut nesnenin child'larını kontrol et
+            for (int i = 0; i < current.childCount; i++)
+            {
+                Transform child = current.GetChild(i);
+                
+                // Child'ın collider'ını kapat
+                var childCollider = child.GetComponent<Collider>();
+                if (childCollider != null)
+                {
+                    childCollider.enabled = false;
+                }
+
+                // Alt seviyedeki child'lar için recursive çağrı
+                DisableChildCollidersRecursive(child);
+            }
+        }
+
+        private Transform FindChildByNameRecursive(Transform parent, string childName)
+        {
+            // Direct child'larda ara
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform child = parent.GetChild(i);
+                if (child.name == childName)
+                {
+                    return child;
+                }
+            }
+
+            // Alt seviyede recursive ara
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform child = parent.GetChild(i);
+                Transform result = FindChildByNameRecursive(child, childName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null; // Bulunamadı
+        }
+
+        private void UpdateChildStatusText()
+        {
+            if (childStatusText == null) return;
+
+            if (ChangePositionModel != null && ChangePositionModel.IsChildObjectEnabled && !string.IsNullOrEmpty(ChangePositionModel.SelectedChildName))
+            {
+                // Child seçili
+                childStatusText.text = $"Selected Child: {ChangePositionModel.SelectedChildName}";
+                childStatusText.color = Color.green; // Seçili durumu vurgulamak için
+            }
+            else
+            {
+                // Parent seçili veya child yok
+                childStatusText.text = "Selected Child: None";
+                childStatusText.color = Color.gray; // Normal durum
+            }
+        }
+
+        #region Edit Mode Functions
+
+        /// <summary>
+        /// Change position action node için düzenleme modunu açar.
+        /// Object seçme butonları, target butonları, child seçim butonları ve duration kontrolleri gösterilir.
+        /// </summary>
+        public override void EditModeOn()
+        {
+            base.EditModeOn(); // Base class'ın keyboardDisplay'ini göster
+
+            // Object seçme kontrollerini göster
+            if (selectObjectInputField != null && selectObjectInputField.gameObject != null)
+            {
+                selectObjectInputField.gameObject.SetActive(true);
+            }
+
+            if (selectObjectButton != null && selectObjectButton.gameObject != null)
+            {
+                selectObjectButton.gameObject.SetActive(true);
+            }
+
+            // Child seçme butonunu göster
+            if (selectChildObjectButton != null && selectChildObjectButton.gameObject != null)
+            {
+                selectChildObjectButton.gameObject.SetActive(true);
+            }
+
+            // Child status text'ini göster
+            if (childStatusText != null && childStatusText.gameObject != null)
+            {
+                childStatusText.gameObject.SetActive(true);
+            }
+
+            // Target seçme butonunu göster
+            if (selectTargetButton != null && selectTargetButton.gameObject != null)
+            {
+                selectTargetButton.gameObject.SetActive(true);
+            }
+
+            // Duration kontrollerini göster
+            if (durationInputField != null && durationInputField.gameObject != null)
+            {
+                durationInputField.gameObject.SetActive(true);
+            }
+
+            if (durationIncreaseButton != null && durationIncreaseButton.gameObject != null)
+            {
+                durationIncreaseButton.gameObject.SetActive(true);
+            }
+
+            if (durationDecreaseButton != null && durationDecreaseButton.gameObject != null)
+            {
+                durationDecreaseButton.gameObject.SetActive(true);
+            }
+
+            LogManager.LogSuccess($"EditModeOn: Change position action node editing UI shown for: {Model.Title}");
+        }
+
+        /// <summary>
+        /// Change position action node için düzenleme modunu kapatır.
+        /// Object seçme butonları, target butonları, child seçim butonları ve duration kontrolleri gizlenir.
+        /// </summary>
+        public override void EditModeOff()
+        {
+            base.EditModeOff(); // Base class'ın keyboardDisplay'ini gizle
+
+            // Object seçme kontrollerini gizle
+            if (selectObjectInputField != null && selectObjectInputField.gameObject != null)
+            {
+                selectObjectInputField.gameObject.SetActive(false);
+            }
+
+            if (selectObjectButton != null && selectObjectButton.gameObject != null)
+            {
+                selectObjectButton.gameObject.SetActive(false);
+            }
+
+            // Child seçme butonunu gizle
+            if (selectChildObjectButton != null && selectChildObjectButton.gameObject != null)
+            {
+                selectChildObjectButton.gameObject.SetActive(false);
+            }
+
+            // Child status text'ini gizle
+            if (childStatusText != null && childStatusText.gameObject != null)
+            {
+                childStatusText.gameObject.SetActive(false);
+            }
+
+            // Target seçme butonunu gizle
+            if (selectTargetButton != null && selectTargetButton.gameObject != null)
+            {
+                selectTargetButton.gameObject.SetActive(false);
+            }
+
+            // Duration kontrollerini gizle
+            if (durationInputField != null && durationInputField.gameObject != null)
+            {
+                durationInputField.gameObject.SetActive(false);
+            }
+
+            if (durationIncreaseButton != null && durationIncreaseButton.gameObject != null)
+            {
+                durationIncreaseButton.gameObject.SetActive(false);
+            }
+
+            if (durationDecreaseButton != null && durationDecreaseButton.gameObject != null)
+            {
+                durationDecreaseButton.gameObject.SetActive(false);
+            }
+
+            LogManager.LogSuccess($"EditModeOff: Change position action node editing UI hidden for: {Model.Title}");
+        }
+
+        #endregion
     }
 }

@@ -8,7 +8,7 @@ namespace Models.Nodes
         // XML serializasyon için boş constructor
         public StartNode() { }
         
-        public StartNode(string id, string title, Color color, bool enableSelect,List<Port> ports) : base(id, title, color, enableSelect,ports)
+        public StartNode(string id, string title, Color color, bool enableSelect, List<Port> ports) : base(id, title, color, enableSelect, ports)
         {
         }
     }

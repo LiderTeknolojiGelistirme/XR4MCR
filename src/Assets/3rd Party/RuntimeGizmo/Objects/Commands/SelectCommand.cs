@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace RuntimeGizmos
 {
-	public abstract class SelectCommand : ICommand
+	public abstract class SelectCommand : CommandUndoRedo.ICommand
 	{
 		protected Transform target;
 		protected TransformGizmo transformGizmo;

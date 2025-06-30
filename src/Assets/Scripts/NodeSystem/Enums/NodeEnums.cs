@@ -13,9 +13,8 @@ namespace NodeSystem
     // Event tipi enum'u
     public enum EventTypeEnum
     {
-        OnActivated,
         OnStarted, 
         OnCompleted,
-        OnDeactivated
+        OnSkip
     }
 } 

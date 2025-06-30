@@ -1,8 +1,13 @@
 using Enums;
 using Helpers;
 using Managers;
+using System.Threading.Tasks;
+using Models;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Virtualware.Networking.Client;
 using Zenject;
+using Presenters;
 
 namespace Factories
 {
@@ -80,6 +85,27 @@ namespace Factories
                 case ObjectType.YellowLine:
                     prefabToInstantiate = _config.yellowlinePrefab;
                     break;
+                case ObjectType.AllenWrench:
+                    prefabToInstantiate = _config.allenwrenchPrefab;
+                    break;
+                case ObjectType.Multimeter:
+                    prefabToInstantiate = _config.multimeterPrefab;
+                    break;
+                case ObjectType.Nipers:
+                    prefabToInstantiate = _config.nipersPrefab;
+                    break;
+                case ObjectType.Pincers:
+                    prefabToInstantiate = _config.pincersPrefab;
+                    break;
+                case ObjectType.Screwdriver:
+                    prefabToInstantiate = _config.screwdriverPrefab;
+                    break;
+                case ObjectType.Wrench:
+                    prefabToInstantiate = _config.wrenchPrefab;
+                    break;
+                case ObjectType.ControlBox:
+                    prefabToInstantiate = _config.controlboxPrefab;
+                    break;
                 default:
                     Debug.LogError("Bilinmeyen ObjectType: " + objectType);
                     return null;
@@ -94,6 +120,21 @@ namespace Factories
 
             // DiContainer üzerinden instantiate et (enjeksiyonların çalışması için)
             GameObject instance = _container.InstantiatePrefab(prefabToInstantiate);
+            // ObjectPresenter bileşeni kontrolü
+            var presenter = instance.GetComponent<ObjectPresenter>();
+            if (presenter != null)
+            {
+                if (presenter.Model == null)
+                {
+                    presenter.Model = new ObjectModel();
+                }
+
+                presenter.Model.ObjectType = objectType;
+            }
+            else
+            {
+                Debug.LogWarning($"{objectType} prefabında ObjectPresenter bileşeni yok!");
+            }
             
             // Nesne oluşturma sonrası işlemler
             var interactionHelper = instance.GetComponent<InteractionHelper>();
@@ -105,4 +146,6 @@ namespace Factories
             return instance;
         }
     }
+
+    
 } 

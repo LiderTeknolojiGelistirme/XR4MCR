@@ -1,36 +1,58 @@
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.XR;
+using Managers;
 using UnityEngine.UI;
 
-namespace Helpers
-{
+
     public class CustomScrollRect : ScrollRect
     {
-        // Eger scroll yapabilmek istiyorsak
-        public bool canDrag = true;
+        int maximumTouchCount = 2;
 
-        // Eger ray hedefi button ise, drag islemi engellenecek
-        public void SetCanDrag(bool value)
+        private XRInputManager _xrInputManager;
+
+        // Get the touch position from XR controller
+        public Vector2 MultiTouchPosition
         {
-            canDrag = value;
+            get
+            {
+                Vector2 position = Vector2.zero;
+                // Get pointer position from the XRInputManager
+                position = _xrInputManager.ScreenPointerPosition;
+                return position;
+            }
+        }
+
+        // Inject XRInputManager
+        public void Construct(XRInputManager xrInputManager)
+        {
+            _xrInputManager = xrInputManager;
         }
 
         public override void OnBeginDrag(PointerEventData eventData)
         {
-            if (canDrag)
+            if (_xrInputManager != null)
+            {
+                eventData.position = MultiTouchPosition;
                 base.OnBeginDrag(eventData);
-        }
-
-        public override void OnDrag(PointerEventData eventData)
-        {
-            if (canDrag)
-                base.OnDrag(eventData);
+            }
         }
 
         public override void OnEndDrag(PointerEventData eventData)
         {
-            if (canDrag)
+            if (_xrInputManager != null)
+            {
+                eventData.position = MultiTouchPosition;
                 base.OnEndDrag(eventData);
+            }
+        }
+
+        public override void OnDrag(PointerEventData eventData)
+        {
+            if (_xrInputManager != null)
+            {
+                eventData.position = MultiTouchPosition;
+                base.OnDrag(eventData);
+            }
         }
     }
-}
-

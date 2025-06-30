@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: LTG
-  productName: XR4MCR
+  productName: OC1_XR4MCR_FinalApplication
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -139,12 +139,9 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 0.1
+  bundleVersion: 0.2
   preloadedAssets:
-  - {fileID: 11400000, guid: 5cb7f2c7c10385942b07cdd5d90a3b6d, type: 2}
-  - {fileID: -2199866930515804532, guid: 631aeb8697ab232439e802e11e132ce8, type: 2}
-  - {fileID: 11400000, guid: d61525b539a87cb4592d6bb847465c8b, type: 2}
-  - {fileID: 6819959624482002382, guid: 50d292dc3b2be6442814df407b1e5a90, type: 2}
+  - {fileID: 0}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -166,7 +163,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
     Android: com.Virtualware.VirooStudio
-    Standalone: com.LTG.XR4MCR
+    Standalone: com.LTG.OC1-XR4MCR-FinalApplication
   buildNumber:
     Standalone: 0
     VisionOS: 0

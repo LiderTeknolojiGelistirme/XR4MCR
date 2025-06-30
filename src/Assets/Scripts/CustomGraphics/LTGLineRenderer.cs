@@ -134,7 +134,10 @@ namespace CustomGraphics
                     foreach (RectTransform rt in _parentsToCompensateScale)
                     {
                         if (rt.localScale.x != 0)
-                            _rectTransform.localScale = _rectTransform.localScale / rt.localScale.x;
+                            if (Mathf.Abs(rt.localScale.x) > 0.0001f) // Sıfıra çok yakın değerleri de atla
+                            {
+                                _rectTransform.localScale = _rectTransform.localScale / rt.localScale.x;
+                            }
                     }
                 }
                 else if (Canvas.renderMode == RenderMode.ScreenSpaceCamera)
@@ -144,7 +147,10 @@ namespace CustomGraphics
                         RectTransform rt = _parentsToCompensateScale[i];
 
                         if (rt.localScale.x != 0)
-                            _rectTransform.localScale = _rectTransform.localScale / rt.localScale.x;
+                            if (Mathf.Abs(rt.localScale.x) > 0.0001f) // Sıfıra çok yakın değerleri de atla
+                            {
+                                _rectTransform.localScale = _rectTransform.localScale / rt.localScale.x;
+                            }
                     }
                 }
             }

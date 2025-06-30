@@ -7,7 +7,9 @@ using Zenject;
 using Managers;
 using System;
 using System.Linq;
+using Commands;
 using CustomGraphics;
+using MeadowGames.UINodeConnect4.UICContextMenu;
 using NodeSystem.Events;
 using NodeSystem;
 
@@ -209,15 +211,7 @@ namespace Presenters
         {
             if (Model.image)
             {
-                if (ConnectionsCount > 0)
-                {
-                    Model.image.sprite = Model.iconConnected;
-                }
-                else
-                {
-                    Model.image.sprite = Model.iconUnconnected;
                     Model.image.color = Model.iconColorDefault;
-                }
             }
         }
 
@@ -245,9 +239,25 @@ namespace Presenters
                 Vector2 startPortLocalPosition = _graphManager.CanvasRectTransform.InverseTransformPoint(Model.image.transform.position);
         
                 // XR controller'dan gelen pointer pozisyonunu canvas local olarak al (Vector3 → Vector2 dönüşümü yap):
-                Vector2 pointerLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
+                Vector3 pointerLocalPosition = _inputManager.GetCanvasPointerPosition(_graphManager);
+                
+                // COORDINATE SPACE COMPENSATION - Scale ve Scroll offset'lerini kompanse et
+                // Bu, Pointer sınıfındaki aynı kompensasyon sistemi
+                if (_graphManager.scrollRect != null && _graphManager.scrollRect.content != null)
+                {
+                    Vector2 contentPosition = _graphManager.scrollRect.content.anchoredPosition;
+                    Vector3 contentScale = _graphManager.contentTransform.localScale;
+                    
+                    // Scale ile pozisyonu çarp (content ne kadar scale'lendiyse ghost line da o kadar çarpılmalı)
+                    pointerLocalPosition.x *= contentScale.x;
+                    pointerLocalPosition.y *= contentScale.y;
+                    
+                    // Content'in scroll offset'ini ekle
+                    pointerLocalPosition.x += contentPosition.x;
+                    pointerLocalPosition.y += contentPosition.y;
+                }
 
-                // Line için noktaları hazırla (başlangıç portu → VR pointer pozisyonu):
+                // Line için noktaları hazırla (başlangıç portu → kompanse edilmiş pointer pozisyonu):
                 Vector2[] linePoints = new Vector2[] {
                     startPortLocalPosition,
                     pointerLocalPosition
@@ -322,8 +332,10 @@ namespace Presenters
                 // Log: Bağlantı oluşturma girişimi
                 LogManager.LogInteraction($"Attempting connection: {sourcePort.ID} ({sourcePort.Polarity}) → {ID} ({Polarity})");
                 
-                sourcePort.ConnectTo(this);
+                
+                var cp = sourcePort.ConnectTo(this);
                 _graphManager.UpdateConnectionsLine();
+                UndoRedoManager.Insert(new CreateConnectionCommand(sourcePort,this,cp,_graphManager));
             }
             else
             {
@@ -356,12 +368,30 @@ namespace Presenters
                 Vector2 portLocalPos = _graphManager.CanvasRectTransform.InverseTransformPoint(transform.position);
                 hitPosCanvasLocal.z = 0f;
 
+                // COORDINATE SPACE COMPENSATION - Scale offset'ini kompanse et
+                // Port detection için scale faktörünü hesaba kat
+                if (_graphManager.scrollRect != null && _graphManager.scrollRect.content != null)
+                {
+                    Vector3 contentScale = _graphManager.contentTransform.localScale;
+                    
+                    // Hit pozisyonunu scale'e göre ayarla
+                    hitPosCanvasLocal.x /= contentScale.x;
+                    hitPosCanvasLocal.y /= contentScale.y;
+                }
+
                 float distance = Vector2.Distance(hitPosCanvasLocal, portLocalPos);
 
-                // Buradaki mesafe eşik değerini ayarla (örneğin 30f)
-                if (distance <= 30f)
+                // Scale'e göre mesafe eşiğini ayarla
+                float scaleAdjustedThreshold = 30f;
+                if (_graphManager.contentTransform != null)
                 {
-                    Debug.Log($"Port vuruldu! Mesafe: {distance}");
+                    float avgScale = (_graphManager.contentTransform.localScale.x + _graphManager.contentTransform.localScale.y) / 2f;
+                    scaleAdjustedThreshold = 30f / avgScale; // Scale küçüldükçe threshold büyür
+                }
+
+                if (distance <= scaleAdjustedThreshold)
+                {
+                    Debug.Log($"Port vuruldu! Mesafe: {distance}, Threshold: {scaleAdjustedThreshold}");
                     return true;
                 }
             }
@@ -378,6 +408,7 @@ namespace Presenters
 
         void OnXRPointerUp()
         {
+            
             // ScrollRect'i tekrar etkinleştir (XR için)
             if (_graphManager != null && _graphManager.scrollRect != null)
             {
@@ -391,7 +422,7 @@ namespace Presenters
             }
         }
 
-        private ConnectionPresenter ConnectTo(PortPresenter closestFoundPort)
+        public ConnectionPresenter ConnectTo(PortPresenter closestFoundPort)
         {
             Debug.Log("ConnectTo metodu çağrıldı mı?");
 

@@ -1,11 +1,23 @@
-﻿using UnityEngine;
+﻿using Models.Nodes;
+using UnityEngine;
 using UnityEngine.Serialization;
+using Models.Nodes;
 
 namespace Presenters.NodePresenters
 {
     public class GetKeyDownNodePresenter : BaseNodePresenter
     {
         public KeyCode keyCode;
+
+        void Start()
+        {
+            // Description'ı sadece boşsa set et (Load'dan gelen değeri korumak için)
+            if (string.IsNullOrEmpty(Model.Description))
+            {
+                Model.Description = "Wait for a key to be pressed";
+            }
+        }
+
         public override void Play()
         {
             if (Input.GetKeyDown(keyCode))
@@ -31,12 +43,6 @@ namespace Presenters.NodePresenters
         {
             Debug.Log("TestNode Completed");
             base.CompleteNode();
-        }
-
-        public override void DeactivateNode()
-        {
-            Debug.Log("TestNode Deactivated");
-            base.DeactivateNode();
         }
     }
 }

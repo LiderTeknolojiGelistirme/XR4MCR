@@ -2,6 +2,7 @@
 {
     public enum NodeType
     {
+        Ghost,
         Start,
         Finish,
         TouchNode,
@@ -10,6 +11,7 @@
         LookNode,
         LogicalOR,
         LogicalAND,
+        ToolTouchNode,
         // Action Node Tipleri
         PlaySoundAction,
         ChangeMaterialAction,
@@ -19,6 +21,9 @@
         ToggleObjectAction,
         PlayAnimationAction,
         DescriptionActionNode,
-        RobotAnimationAction
+        RobotAnimationAction,
+        WorldDescriptionActionNode,
+        VFXActionNode,
+        HighlightObjectActionNode
     }
 }

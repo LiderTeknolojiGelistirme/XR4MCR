@@ -14,7 +14,7 @@ namespace Presenters
         // EventTypeEnum artık ayrı bir dosyada
         
         // Editor'da seçilebilmesi için SerializeField
-        [SerializeField] private NodeSystem.EventTypeEnum _eventType = NodeSystem.EventTypeEnum.OnActivated;
+        [SerializeField] private NodeSystem.EventTypeEnum _eventType;
         
         // EventType özelliğini modele taşıdık, burada getter üzerinden erişiyoruz
         public NodeSystem.EventTypeEnum EventType => (Model as Models.EventPort)?.EventType ?? _eventType;
@@ -94,11 +94,11 @@ namespace Presenters
                            
                         }
 
-                        if (targetPortPresenter.CompareTag("StopInput") && targetNodePresenter != null)
+                        else if (targetPortPresenter.CompareTag("StopInput") && targetNodePresenter != null)
                         {
-                            AudioActionNodePresenter actionNodePresenter = targetNodePresenter as AudioActionNodePresenter;
+                            ActionNodePresenter actionNodePresenter = targetNodePresenter as ActionNodePresenter;
 
-                            actionNodePresenter.PerformStop();
+                            actionNodePresenter.StopAction();
 
                         }
 

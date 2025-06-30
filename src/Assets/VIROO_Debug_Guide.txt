@@ -1,0 +1,108 @@
+=== VIROO RUNTIME DEBUG GUİDE ===
+
+SORUN: Unity editöründe çalışan uygulama, VIROO runtime ortamında pointer ve 3D nesne seçimi sorunları yaşıyor.
+
+1. NODE EDİTÖRÜ POINTER SORUNU:
+   - Pointer görünmüyor
+   - Node'lara tıklama çalışmıyor  
+   - Ray rengi değişiyor ama pointer render edilmiyor
+
+2. 3D NESNE SEÇİMİ SORUNU:
+   - Transform gizmo görünmüyor
+   - Trigger ile seçim çalışmıyor
+   - Ray 3D nesneye çarpıyor ama seçim olmuyor
+
+=== DEBUG DOSYALARI ===
+
+1. LOG DOSYASI KONUMU:
+   %appdata%/LocalLow/[CompanyName]/[ProductName]/VIROO_Complete_Debug.txt
+   
+   Alternatif yollar:
+   - C:/Users/[KullanıcıAdı]/AppData/LocalLow/[CompanyName]/[ProductName]/
+   - Application.persistentDataPath + "/VIROO_Complete_Debug.txt"
+
+2. EKLENEN DEBUG SCRIPT'LERİ:
+
+   A) VIROODebugChecker.cs:
+      - Sahneye boş GameObject ekleyin
+      - VIROODebugChecker script'ini attach edin
+      - 2 saniye sonra tüm kritik bileşenleri kontrol eder
+      
+   B) LogManager geliştirmesi:
+      - Tüm log'lar hem UI'ya hem dosyaya yazılır
+      - Zaman damgası ve kategori bilgisi eklendi
+
+=== LOG KATEGORİLERİ ===
+
+[POINTER]     - Pointer durumu ve render bilgileri
+[GIZMO]       - TransformGizmo seçim ve trigger durumu
+[XR INPUT]    - XR trigger olayları ve raycast durumu
+[RAYCAST]     - UI raycast sonuçları ve element bulma
+[SYSTEM]      - SystemManager 3D nesne seçimi
+[GRAPH]       - GraphManager pointer initialization
+[LOG/ERROR/WARNING] - Genel sistem mesajları
+
+=== KRİTİK KONTROL NOKTALARI ===
+
+1. POINTER RENDERING:
+   - POINTER INIT: Image, Sprite, Canvas sorting order
+   - POINTER SHOW/HIDE: Image enable/disable durumu
+   - POINTER UPDATE: Plane hit durumu
+
+2. TRIGGER EVENTS:
+   - XR INPUT: Trigger pressed/released olayları
+   - GIZMO: Trigger durum değişimleri
+   - POINTER DOWN: Element bulma ve seçim
+
+3. RAYCAST RESULTS:
+   - RAYCAST: UI element sayısı ve türleri
+   - RAYCAST: Connection bulma durumu
+   - RAYCAST: Final element listesi
+
+4. 3D OBJECT SELECTION:
+   - GIZMO: InteractableWithGizmo component durumu
+   - GIZMO: Raycast hit object bilgileri
+   - SYSTEM: 3D Object selection değişimleri
+
+=== TROUBLESHOOTING ===
+
+A) Pointer Görünmüyor:
+   1. "POINTER INIT" log'larını kontrol edin
+   2. Image enabled durumunu kontrol edin  
+   3. Canvas sorting order kontrol edin
+   4. Sprite assignment kontrol edin
+
+B) Node Tıklama Çalışmıyor:
+   1. "XR INPUT: Trigger PRESSED" log'unu arayın
+   2. "POINTER DOWN: OnPointerDown triggered" kontrol edin
+   3. "RAYCAST: Found X UI raycast results" sayısını kontrol edin
+   4. "RAYCAST: Found IElement" log'larını kontrol edin
+
+C) 3D Nesne Seçimi Çalışmıyor:
+   1. "GIZMO: GetTarget triggered" log'unu arayın
+   2. "GIZMO: Raycast hit object" ile nesne adını kontrol edin
+   3. "GIZMO: InteractableWithGizmo component" durumunu kontrol edin
+   4. "SYSTEM: 3D Object selected" log'unu arayın
+
+=== KULLANIM ===
+
+1. Projeyi build alın ve VIROO'ya yükleyin
+2. VIROO'da uygulamayı çalıştırın
+3. Sorunlu davranışları test edin
+4. Uygulamayı kapatın
+5. %appdata%/LocalLow/... klasöründen VIROO_Complete_Debug.txt dosyasını indirin
+6. Log'ları yukarıdaki kategorilere göre analiz edin
+
+=== LOG ÖRNEK FORMATLAR ===
+
+Normal çalışma:
+[10:15:32.123] [POINTER] POINTER INIT: Image=True, RectTransform=True, Canvas=True
+[10:15:32.124] [XR INPUT] Trigger PRESSED - OnPointerDown will fire
+[10:15:32.125] [POINTER] POINTER DOWN: OnPointerDown triggered
+[10:15:32.126] [RAYCAST] Found 3 UI raycast results at screen pos (512, 384, 10)
+
+Sorunlu çalışma:
+[10:15:32.123] [ERROR] POINTER INIT: Image=False, RectTransform=True, Canvas=True
+[10:15:32.124] [ERROR] VIROO CHECK: Pointer Image is NULL!
+
+Bu guide ile VIROO runtime ortamındaki sorunları sistemli olarak debug edebilirsiniz. 

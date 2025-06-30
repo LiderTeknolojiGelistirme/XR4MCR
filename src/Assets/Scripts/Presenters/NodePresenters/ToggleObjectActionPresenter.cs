@@ -18,9 +18,14 @@ namespace Presenters.NodePresenters
             _targetState = defaultState;
             
             // Log: ToggleObjectActionPresenter oluşturuldu
-            LogManager.LogSuccess("ToggleObjectActionPresenter başlatıldı: " + gameObject.name);
+            LogManager.LogSuccess("ToggleObjectActionPresenter started: " + gameObject.name);
         }
-        
+
+        private void Start()
+        {
+            //Model.Description = "Toggle the selected object";
+        }
+
         protected override void PerformAction()
         {
             base.PerformAction();
@@ -63,7 +68,7 @@ namespace Presenters.NodePresenters
             Debug.Log($"Nesne durumu değiştirildi: {targetObj.name}, Durum={_targetState}");
             
             // Log: Durum değiştirme başarılı
-            LogManager.LogSuccess($"Nesne {(_targetState ? "açıldı" : "kapatıldı")}: {targetObj.name}");
+            LogManager.LogSuccess($"Object {(_targetState ? "enabled" : "disabled")}: {targetObj.name}");
         }
     }
 } 

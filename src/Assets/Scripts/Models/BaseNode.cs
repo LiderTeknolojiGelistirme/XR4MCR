@@ -6,6 +6,7 @@ using Presenters;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
+using Enums;
 
 namespace Models
 {
@@ -17,6 +18,20 @@ namespace Models
     [XmlInclude(typeof(LookNode))]
     [XmlInclude(typeof(LogicNode))]
     [XmlInclude(typeof(ActionNode))]
+    [XmlInclude(typeof(VFXActionNode))]
+    [XmlInclude(typeof(HighlightObjectActionNode))]
+    [XmlInclude(typeof(AudioActionNode))]
+    [XmlInclude(typeof(ChangeMaterialActionNode))]
+    [XmlInclude(typeof(ChangePositionActionNode))]
+    [XmlInclude(typeof(ChangeRotationActionNode))]
+    [XmlInclude(typeof(ChangeScaleActionNode))]
+    [XmlInclude(typeof(ToggleObjectActionNode))]
+    [XmlInclude(typeof(PlayAnimationActionNode))]
+    [XmlInclude(typeof(RobotAnimationActionNode))]
+    [XmlInclude(typeof(DescriptionActionNode))]
+    [XmlInclude(typeof(WorldDescriptionActionNode))]
+    [XmlInclude(typeof(ToolTouchNode))]
+    [XmlInclude(typeof(WaitForNextNode))]
     [XmlInclude(typeof(Models.EventPort))]
     [Serializable]
     public abstract class BaseNode
@@ -24,6 +39,7 @@ namespace Models
         public string ID { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
+        public NodeType Type { get; set; }
         
         public float PosX { get; set; }
         public float PosY { get; set; }
@@ -77,6 +93,20 @@ namespace Models
             EnableSelect = enableSelect;
             if (ports != null)
                 Ports.AddRange(ports);
+        }
+
+        public BaseNode(BaseNode node)
+        {
+            ID = node.ID;
+            Title = node.Title;
+            Color = node.Color;
+            DefaultColor = node.DefaultColor;
+            HeaderColor = node.HeaderColor;
+            EnableSelect = node.EnableSelect;
+            if (node.Ports != null)
+            {
+                Ports.AddRange(node.Ports);
+            }
         }
         
     }

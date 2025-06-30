@@ -24,9 +24,14 @@ namespace Presenters.NodePresenters
             _crossFadeDuration = defaultCrossFadeDuration;
             
             // Log: PlayAnimationActionPresenter oluşturuldu
-            LogManager.LogSuccess("PlayAnimationActionPresenter başlatıldı: " + gameObject.name);
+            LogManager.LogSuccess("PlayAnimationActionPresenter started: " + gameObject.name);
         }
-        
+
+        private void Start()
+        {
+            //Model.Description = "Play an animation on the selected object";
+        }
+
         protected override void PerformAction()
         {
             base.PerformAction();
@@ -92,7 +97,7 @@ namespace Presenters.NodePresenters
             }
             
             // Log: Animasyon oynatma başarılı
-            LogManager.LogSuccess($"Animasyon oynatıldı: {targetObj.name} -> {_animationName}");
+            LogManager.LogSuccess($"Animation played: {targetObj.name} -> {_animationName}");
         }
     }
 } 

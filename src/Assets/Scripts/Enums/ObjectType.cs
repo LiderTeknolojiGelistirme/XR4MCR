@@ -20,7 +20,15 @@ namespace Enums
         Kawasaki,
         NightStand,
         WhiteDesk,
-        YellowLine
+        YellowLine,
+        AllenWrench,
+        Multimeter,
+        Nipers,
+        Pincers,
+        Screwdriver,
+        Wrench,
+
+        ControlBox
         
     }
 } 

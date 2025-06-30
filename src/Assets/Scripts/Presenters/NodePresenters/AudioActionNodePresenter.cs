@@ -7,6 +7,7 @@ using Models.Nodes;
 using Managers;
 using System.Collections.Generic;
 using UnityEditor;
+using Enums;
 
 namespace Presenters.NodePresenters
 {
@@ -28,6 +29,9 @@ namespace Presenters.NodePresenters
         private Camera cam;
         private GameObject centerEyeAnchor;
         private GameObject audioSourcesParent;
+
+        // AudioActionNode model'ine kolay erişim için cast property
+        public AudioActionNode AudioNodeModel => Model as AudioActionNode;
 
         IEnumerator Start()
         {
@@ -70,7 +74,9 @@ namespace Presenters.NodePresenters
         {
             base.Awake();
 
-            SetActionType(ActionNode.ActionType.PlayAudio);
+            
+
+            SetActionType(NodeType.PlaySoundAction);
 
             if (selectObjectButton != null)
             {
@@ -87,10 +93,18 @@ namespace Presenters.NodePresenters
 
                 audioDropdown.AddOptions(audioOptions);
                 audioDropdown.onValueChanged.AddListener(OnAudioSelected);
+
+                // İlk değeri model'e kaydet
+                if (AudioNodeModel != null && audioOptions.Count > 0)
+                {
+                    AudioNodeModel.SelectedAudioName = audioOptions[0];
+                    AudioNodeModel.SelectedAudioIndex = 0;
+                    LogManager.Log($"AudioNode: Initial selection set - {audioOptions[0]}");
+                }
             }
 
             // Log: AudioNodePresenter oluşturuldu
-            LogManager.LogSuccess("AudioNodePresenter başlatıldı: " + gameObject.name);
+            LogManager.LogSuccess("AudioActionNodePresenter started: " + gameObject.name);
 
             if (previewPlayButton != null)
             {
@@ -165,7 +179,29 @@ namespace Presenters.NodePresenters
         {
             string audioName = audioDropdown.options[index].text;
 
-            // Model'e kaydet
+            // Model'e dropdown bilgilerini kaydet - AudioActionNode özelliklerini kullan
+            if (AudioNodeModel != null)
+            {
+                AudioNodeModel.SelectedAudioName = audioName;
+                AudioNodeModel.SelectedAudioIndex = index;
+                
+                // DropdownItems listesini de güncel tutmak için
+                if (AudioNodeModel.DropdownItems == null)
+                {
+                    AudioNodeModel.DropdownItems = new List<string>();
+                }
+                
+                // Dropdown items'ları güncelle (sadece boşsa)
+                if (AudioNodeModel.DropdownItems.Count == 0)
+                {
+                    foreach (var option in audioDropdown.options)
+                    {
+                        AudioNodeModel.DropdownItems.Add(option.text);
+                    }
+                }
+            }
+
+            // Eski parameter sistemini de koruyalım (geriye dönük uyumluluk için)
             SetParameterName("audio");
             SetParameterValue(audioName);
 
@@ -178,13 +214,13 @@ namespace Presenters.NodePresenters
             if (selectedClip != null)
             {
                 _audioSource.clip = selectedClip;
-                LogManager.LogSuccess($"Audio kaynak seçildi: {audioName}");
+                LogManager.LogSuccess($"Audio source selected: {audioName} (Index: {index})");
             }
             else
             {
                 // Audio bulunamadıysa, varsayılan değer kullanılabilir
                 _audioSource.clip = null;
-                LogManager.LogWarning($"Audio kaynak bulunamadı: {audioName}, varsayılan kullanılacak");
+                LogManager.LogWarning($"Audio source not found: {audioName}, using default");
             }
         }
 
@@ -218,6 +254,13 @@ namespace Presenters.NodePresenters
             {
                 Debug.LogWarning("Resources/AudioClips klasöründe hiç clip bulunamadı. Varsayılan değerler kullanılıyor.");
                 clipNames.Add("Varsayılan");
+            }
+
+            // Dropdown items'ları model'e kaydet
+            if (AudioNodeModel != null)
+            {
+                AudioNodeModel.DropdownItems = new List<string>(clipNames);
+                LogManager.LogSuccess($"AudioNode: Dropdown items saved to model ({clipNames.Count} items)");
             }
 
             SetDropdownItems(clipNames);
@@ -254,50 +297,71 @@ namespace Presenters.NodePresenters
 
         private void OnPreviewPlayClicked()
         {
+            LogManager.LogInteraction("Preview play button clicked");
+            
             if (_audioSource != null)
             {
                 _audioSource.Play();
 
                 
-                LogManager.LogSuccess("Önizleme sesi oynatıldı.");
+                LogManager.LogSuccess("Preview audio played.");
             }
             else
             {
-                LogManager.LogWarning("Önizleme için ses kaynağı seçilmedi.");
+                LogManager.LogWarning("No audio source selected for preview.");
             }
         }
 
         private void OnStopClicked()
         {
+            LogManager.LogInteraction("Preview stop button clicked");
+            
             if (_audioSource != null)
             {
                 _audioSource.Stop();
 
 
-                LogManager.LogSuccess("Önizleme sesi durduruldu.");
+                LogManager.LogSuccess("Preview audio stopped.");
             }
             else
             {
-                LogManager.LogWarning("Önizleme için ses kaynağı seçilmedi.");
+                LogManager.LogWarning("No audio source selected for preview.");
             }
         }
 
         private void OnLoopToggleChanged(bool isLooping)
         {
+            LogManager.LogInteraction($"Loop toggle changed: {isLooping}");
+            
             if (isLooping)
                 _audioSource.loop = true;
             else
                 _audioSource.loop = false;
 
+            // Model'e kaydet
+            if (AudioNodeModel != null)
+            {
+                AudioNodeModel.IsLooping = isLooping;
+            }
+
+            // Eski parameter sistemini de koruyalım
             SetParameterName("loop");
             SetParameterValue(isLooping.ToString());
         }
 
         private void OnVolumeChanged(float value)
         {
+            LogManager.LogInteraction($"Volume changed: {value:F2}");
 
             _audioSource.volume = value;
 
+            // Model'e kaydet
+            if (AudioNodeModel != null)
+            {
+                AudioNodeModel.Volume = value;
+            }
+
+            // Eski parameter sistemini de koruyalım
             SetParameterName("volume");
             SetParameterValue(value.ToString("F2"));
         }
@@ -374,10 +438,128 @@ namespace Presenters.NodePresenters
 
         public void Dispose()
         {
-            Destroy(_audioSource.gameObject);
+            if (_audioSource.gameObject != null)
+            {
+                Destroy(_audioSource.gameObject);
+            }
+            else
+            {
+                return;
+            }
+            
         }
 
-        public void PerformStop()
+        /// <summary>
+        /// Model'deki değerleri UI'ya aktarır (yükleme sonrası)
+        /// </summary>
+        public override void SyncModelToUI()
+        {
+            // Önce base sınıfın ortak özelliklerini sync et
+            base.SyncModelToUI();
+            
+            if (AudioNodeModel == null) return;
+
+            // AudioSource hazır olana kadar bekle (Start coroutine'i tamamlanması için)
+            if (_audioSource == null)
+            {
+                LogManager.LogWarning("AudioNode: AudioSource not ready yet, will sync audio later");
+                // Coroutine başlat ve daha sonra sync yap
+                StartCoroutine(WaitForAudioSourceAndSync());
+                return;
+            }
+
+            // Normal sync işlemi
+            PerformUISync();
+        }
+
+        /// <summary>
+        /// AudioSource hazır olana kadar bekler ve sonra sync yapar
+        /// </summary>
+        private IEnumerator WaitForAudioSourceAndSync()
+        {
+            // AudioSource oluşana kadar bekle
+            while (_audioSource == null)
+            {
+                yield return new WaitForSeconds(0.1f);
+            }
+
+            LogManager.LogSuccess("AudioNode: AudioSource ready, performing delayed sync");
+            
+            // Sync işlemini yap
+            PerformUISync();
+        }
+
+        /// <summary>
+        /// Asıl UI sync işlemini yapar
+        /// </summary>
+        private void PerformUISync()
+        {
+            if (AudioNodeModel == null) return;
+
+            // DropdownItems'ları restore et
+            if (AudioNodeModel.DropdownItems != null && AudioNodeModel.DropdownItems.Count > 0)
+            {
+                if (audioDropdown != null)
+                {
+                    audioDropdown.ClearOptions();
+                    audioDropdown.AddOptions(AudioNodeModel.DropdownItems);
+                    LogManager.LogSuccess($"AudioNode: Dropdown items restored ({AudioNodeModel.DropdownItems.Count} items)");
+                }
+            }
+
+            // Seçili audio index'ini restore et
+            if (audioDropdown != null && AudioNodeModel.SelectedAudioIndex >= 0 && 
+                AudioNodeModel.SelectedAudioIndex < audioDropdown.options.Count)
+            {
+                // Dropdown listener'ını geçici olarak kaldır (OnAudioSelected tetiklenmesini engelle)
+                audioDropdown.onValueChanged.RemoveListener(OnAudioSelected);
+                
+                // Dropdown value'yu set et
+                audioDropdown.value = AudioNodeModel.SelectedAudioIndex;
+                
+                // Listener'ı geri ekle
+                audioDropdown.onValueChanged.AddListener(OnAudioSelected);
+                
+                // Audio clip'i manuel olarak yükle
+                if (!string.IsNullOrEmpty(AudioNodeModel.SelectedAudioName))
+                {
+                    AudioClip selectedClip = FindClipInProject(AudioNodeModel.SelectedAudioName);
+                    if (selectedClip != null && _audioSource != null)
+                    {
+                        _audioSource.clip = selectedClip;
+                        LogManager.LogSuccess($"AudioNode: Audio clip restored: {AudioNodeModel.SelectedAudioName}");
+                    }
+                    else
+                    {
+                        LogManager.LogWarning($"AudioNode: Could not restore audio clip: {AudioNodeModel.SelectedAudioName}");
+                    }
+                }
+            }
+
+            // Loop ayarını restore et
+            if (loopToggle != null)
+            {
+                loopToggle.isOn = AudioNodeModel.IsLooping;
+                if (_audioSource != null)
+                {
+                    _audioSource.loop = AudioNodeModel.IsLooping;
+                }
+            }
+
+            // Volume ayarını restore et
+            if (volumeSlider != null)
+            {
+                volumeSlider.value = AudioNodeModel.Volume;
+                if (_audioSource != null)
+                {
+                    _audioSource.volume = AudioNodeModel.Volume;
+                }
+            }
+
+            LogManager.LogSuccess($"AudioNode UI synced - Selected: {AudioNodeModel.SelectedAudioName}, Loop: {AudioNodeModel.IsLooping}, Volume: {AudioNodeModel.Volume:F2}");
+        }
+
+        public override void StopAction()
         {
             _audioSource.Stop();
         }

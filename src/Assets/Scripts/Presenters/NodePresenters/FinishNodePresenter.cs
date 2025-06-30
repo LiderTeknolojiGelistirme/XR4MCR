@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Managers;
 
 namespace Presenters.NodePresenters
 {
@@ -22,12 +23,9 @@ namespace Presenters.NodePresenters
 
         public override void CompleteNode()
         {
+            LogManager.LogSuccess("Finish node completed - Scenario finished");
             base.CompleteNode();
         }
-
-        public override void DeactivateNode()
-        {
-            base.DeactivateNode();
-        }
+        
     }
 }

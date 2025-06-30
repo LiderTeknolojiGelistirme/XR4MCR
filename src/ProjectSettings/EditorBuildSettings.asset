@@ -9,8 +9,8 @@ EditorBuildSettings:
     path: Assets/Scenes/VIROO Main.unity
     guid: d562e890915c4a3418d2e6b39ed64772
   - enabled: 1
-    path: Assets/Scenes/LTGScenario.unity
-    guid: 4f76fb8f3705436438e278130eab7693
+    path: Assets/Scenes/LTGScenario_Egemen.unity
+    guid: 5b8a9a27e80d06b4d9014b6c839cc1ba
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 8646e1bde83fc2445be8abc1347a8e85,
       type: 2}
@@ -18,9 +18,11 @@ EditorBuildSettings:
       type: 2}
     com.htc.upm.wave.xrsdk.xrsettings: {fileID: 11400000, guid: 5cb7f2c7c10385942b07cdd5d90a3b6d,
       type: 2}
+    com.unity.addressableassets: {fileID: 11400000, guid: c781003c09919254ab508903224c668c,
+      type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 631aeb8697ab232439e802e11e132ce8,
       type: 2}
-    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 50d292dc3b2be6442814df407b1e5a90,
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: d4bc7f3f0b445104aa642c3ce6ea0fc4,
       type: 2}
     xr.sdk.mock-hmd.settings: {fileID: 11400000, guid: d61525b539a87cb4592d6bb847465c8b,
       type: 2}

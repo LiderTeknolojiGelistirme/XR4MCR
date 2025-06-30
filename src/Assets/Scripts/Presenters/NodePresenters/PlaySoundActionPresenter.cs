@@ -17,14 +17,20 @@ namespace Presenters.NodePresenters
         {
             base.Awake();
             
+            
             // Varsayılan ses klibini ayarla
             _soundClip = defaultSoundClip;
             _volume = defaultVolume;
             
             // Log: PlaySoundActionPresenter oluşturuldu
-            LogManager.LogSuccess("PlaySoundActionPresenter başlatıldı: " + gameObject.name);
+            LogManager.LogSuccess("PlaySoundActionPresenter started: " + gameObject.name);
         }
-        
+
+        private void Start()
+        {
+            //Model.Description = "Play a sound on the selected object";
+        }
+
         protected override void PerformAction()
         {
             base.PerformAction();
@@ -88,7 +94,7 @@ namespace Presenters.NodePresenters
                 }
                 
                 // Log: Ses çalma başarılı
-                LogManager.LogSuccess($"Ses çalındı: {_soundClip.name}");
+                LogManager.LogSuccess($"Sound played: {_soundClip.name}");
             }
             else
             {

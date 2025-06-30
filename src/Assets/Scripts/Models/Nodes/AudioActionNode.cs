@@ -12,6 +12,14 @@ namespace Models.Nodes
         [XmlArrayItem("Item")]
         public List<string> DropdownItems { get; set; } // List of dropdown options
 
+        // Seçili audio clip bilgileri
+        public string SelectedAudioName { get; set; }
+        public int SelectedAudioIndex { get; set; } = 0;
+        
+        // Audio ayarları
+        public bool IsLooping { get; set; } = false;
+        public float Volume { get; set; } = 1.0f;
+
         // XML serialization for an empty constructor
         public AudioActionNode() { }
 
@@ -19,6 +27,11 @@ namespace Models.Nodes
             : base(id, title, color, enableSelect, ports)
         {
             this.DropdownItems = dropdownItems ?? new List<string>(); // Initialize with an empty list if null
+        }
+
+        public AudioActionNode(BaseNode node) : base(node)
+        {
+            this.DropdownItems = new List<string>();
         }
     }
 }

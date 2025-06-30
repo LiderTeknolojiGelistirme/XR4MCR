@@ -7,6 +7,7 @@ using Managers;
 using TMPro;
 using Viroo.Interactions;
 using Zenject;
+using UndoRedoManager = CommandUndoRedo.UndoRedoManager;
 
 namespace RuntimeGizmos
 {
@@ -207,6 +208,15 @@ namespace RuntimeGizmos
                 SetNearAxis();
             }
 
+            // XRInputManager'dan trigger durumunu güncelle
+            if (_xrInputManager != null)
+            {
+                // PointerPress sadece ilk defa basıldığında true dönüyor
+                // Gizmo için sürekli basılı tutma durumu gerekiyor
+                isTriggerPressed = _xrInputManager.GetRawTriggerState();
+                isTriggerReleased = !_xrInputManager.GetRawTriggerState();
+            }
+            
             GetTarget();
 
             if (mainTargetRoot == null) return;
@@ -460,7 +470,7 @@ namespace RuntimeGizmos
             float currentSnapRotationAmount = 0;
             float currentSnapScaleAmount = 0;
 
-            List<ICommand> transformCommands = new List<ICommand>();
+            List<CommandUndoRedo.ICommand> transformCommands = new List<CommandUndoRedo.ICommand>();
             for (int i = 0; i < targetRootsOrdered.Count; i++)
             {
                 transformCommands.Add(new TransformCommand(this, targetRootsOrdered[i]));
@@ -737,30 +747,32 @@ namespace RuntimeGizmos
                     }
                     else
                     {
-                        target = hitInfo.transform.parent;
+                        target = hitInfo.transform;
                     }
 
+                    var interactableComponent = hitInfo.transform.GetComponent<InteractableWithGizmo>();
 
-                    if (hitInfo.transform.GetComponent<InteractableWithGizmo>() != null &&
-                        hitInfo.transform.GetComponent<InteractableWithGizmo>().interactableWithGizmo == true)
+                    if (interactableComponent != null && interactableComponent.interactableWithGizmo == true)
                     {
                         if (isAdding)
                         {
+                            LogManager.LogGizmo($"Adding target: {target.name}");
                             AddTarget(target);
                             _xrInputManager.SetSelected3DObject(target.gameObject);
                         }
                         else if (isRemoving)
                         {
+                            LogManager.LogGizmo($"Removing target: {target.name}");
                             RemoveTarget(target);
                             _xrInputManager.SetSelected3DObject(target.gameObject);
                         }
                         else if (!isAdding && !isRemoving)
                         {
+                            LogManager.LogGizmo($"Clear and add target: {target.name}");
                             ClearAndAddTarget(target);
                             _xrInputManager.SetSelected3DObject(target.gameObject);
                         }
                     }
-
                     else
                     {
                         if (!isAdding && !isRemoving)

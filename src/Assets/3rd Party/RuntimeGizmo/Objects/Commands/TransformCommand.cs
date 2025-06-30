@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace RuntimeGizmos
 {
-	public class TransformCommand : ICommand
+	public class TransformCommand : CommandUndoRedo.ICommand
 	{
 		TransformValues newValues;
 		TransformValues oldValues;

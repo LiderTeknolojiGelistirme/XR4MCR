@@ -4,6 +4,9 @@ using UnityEngine.Serialization;
 [CreateAssetMenu(fileName = "NodeConfig", menuName = "Config/Node")]
 public class NodeConfig : ScriptableObject
 {
+    [Header("Player Prefabs")]
+    public GameObject rightControllerTutorialPrefab;
+    public GameObject leftControllerTutorialPrefab;
     [Header("Node Settings")]
     public Vector2 size = new Vector2(200, 150);
     public Color defaultNodeColor = Color.gray;
@@ -20,6 +23,7 @@ public class NodeConfig : ScriptableObject
     public Color eventPortColor = new Color(1f, 0.5f, 0.1f); // Event portları için turuncu
     
     [Header("Connection Settings")]
+    public GameObject connectionPrefab;
     public Color connectionColor = Color.green; // Bağlantı rengi
     public float connectionWidth = 5f; // Bağ
     
@@ -34,7 +38,10 @@ public class NodeConfig : ScriptableObject
     public Sprite dragPointerSprite;     // Sürükleme imleç sprite'ı
     public Color pointerColor = Color.white;  // Pointer rengi
 
-    [Header("Node Prefabs")] public GameObject LogicalOR;
+    [Header("Node Prefabs")] 
+
+    public GameObject GhostNode;
+    public GameObject LogicalOR;
     public GameObject LogicalAND;
     public GameObject touchNode;
     public GameObject grabNode;
@@ -52,7 +59,12 @@ public class NodeConfig : ScriptableObject
     public GameObject toggleObjectActionNode;
     public GameObject playAnimationActionNode;
     public GameObject descriptionActionNode;
+    public GameObject worldDescriptionActionNode;
     public GameObject robotAnimationActionNode;
+    public GameObject vfxActionNode;
+    public GameObject highlightObjectActionNode;
+    public GameObject toolTouchNode;
+    
     
     [Header("Object Prefabs")]
     public GameObject capsulePrefab; // Assets/Objects/Object1/Prefab/Capsule.prefab
@@ -73,10 +85,20 @@ public class NodeConfig : ScriptableObject
     public GameObject nightstandPrefab;
     public GameObject whitedeskPrefab;
     public GameObject yellowlinePrefab;
+
+    public GameObject allenwrenchPrefab;
+    public GameObject multimeterPrefab;
+    public GameObject nipersPrefab;
+    public GameObject pincersPrefab;
+    public GameObject screwdriverPrefab;
+    public GameObject wrenchPrefab;
+
+    public GameObject controlboxPrefab;
     
 
     [Header("CanvasPrefabs")]
     public GameObject achievementCanvas;
+    public GameObject worldNotificationCanvas;
 
 
 } 

@@ -5,14 +5,19 @@ using Presenters;
 using Presenters.NodePresenters;
 using Models;
 using System.Linq;
+using Helpers.UI;
 using TMPro;
 using Zenject;
 using NodeSystem;
+using UnityEngine.EventSystems;
+using VIVE.OpenXR.Samples.Spectator.AdvDemo;
 
 namespace Managers
 {
     public class ScenarioManager : MonoBehaviour
     {
+
+        public ToggleSwitch ts;
         // Aktif node'u bilmeli -  butun node'lari bilmeli - Skip, Next gibi metodlar burada olmali - 
         [Inject] private GraphManager _graphManager;
         [Inject] private UIManager _uiManager;
@@ -70,8 +75,20 @@ namespace Managers
         {
             Debug.Log("ScenarioManager: Senaryo başlatıldı!");
             
+            // Düzenleme modunu kapat
+            //EditModeOff();
+
+            if (ts.CurrentValue)
+            {
+                ts.OnPointerClick(new PointerEventData(EventSystem.current));
+            }
+            
+            
             // Tüm nodeların durumunu sıfırla
             ResetAllNodeStates();
+            
+            // Tüm world description canvas'larını gizle
+            HideAllWorldDescriptionCanvases();
             
             // Node seviyelerini hesapla
             CalculateNodeLayers();
@@ -79,12 +96,40 @@ namespace Managers
             // Başlangıç node'unu aktif yap
             _graphManager.StartNode.StartNode();
             ActiveNodePresenter = _graphManager.StartNode;
+
+            
+
             Debug.Log($"ScenarioManager: Başlangıç node'u aktif yapıldı: {ActiveNodePresenter.Model.Title}");
             
             // Node bilgilerini göster
             UpdateNodeInfoDisplay();
+            
+            
         }
-        
+
+        public void StopScenario()
+        {
+            Debug.Log("ScenarioManager: Senaryo durduruluyor!");
+
+            // Şu anki aktif node'u deaktive et
+            if (ActiveNodePresenter != null)
+            {
+                Debug.Log($"ScenarioManager: Aktif node durduruldu: {ActiveNodePresenter.Model.Title}");
+            }
+
+            // Düzenleme modunu aç
+            //EditModeOn();
+            if (!ts.CurrentValue)
+            {
+                ts.OnPointerClick(new PointerEventData(EventSystem.current));
+            }
+            
+
+            // UI bilgilerini temizle
+            _uiManager.ClearScenarioInfo();
+        }
+
+
         /// <summary>
         /// Tüm nodeların durumunu temizler ve senaryoyu yeniden başlatmaya hazır hale getirir
         /// </summary>
@@ -104,12 +149,36 @@ namespace Managers
                     node.Model.IsActive = false;
                     node.Model.IsStarted = false;
                     
-                    // Node'u deaktive et (event'leri tetikler)
-                    node.DeactivateNode();
                 }
             }
             
             Debug.Log($"ScenarioManager: Toplam {allNodes.Count} node sıfırlandı.");
+        }
+
+        /// <summary>
+        /// Senaryo başında tüm world description canvas'larını gizler
+        /// </summary>
+        private void HideAllWorldDescriptionCanvases()
+        {
+            Debug.Log("ScenarioManager: Tüm world description canvas'ları gizleniyor...");
+            
+            int hiddenCanvasCount = 0;
+            
+            // GraphManager'dan tüm nodeları al
+            if (_graphManager != null && _graphManager.NodePresenters != null)
+            {
+                foreach (var node in _graphManager.NodePresenters)
+                {
+                    // WorldDescriptionActionNodePresenter tipindeki node'ları kontrol et
+                    if (node is WorldDescriptionActionNodePresenter worldDescNode)
+                    {
+                        worldDescNode.HideCanvasOnScenarioStart();
+                        hiddenCanvasCount++;
+                    }
+                }
+            }
+            
+            Debug.Log($"ScenarioManager: Toplam {hiddenCanvasCount} world description canvas gizlendi.");
         }
 
         public void FinishScenario()
@@ -118,6 +187,13 @@ namespace Managers
             
             // UI bilgilerini temizle
             _uiManager.ClearScenarioInfo();
+
+             if (!ts.CurrentValue)
+            {
+                ts.OnPointerClick(new PointerEventData(EventSystem.current));
+            }
+
+            
         }
 
         public void GoNextNode()
@@ -125,7 +201,7 @@ namespace Managers
             string currentNodeTitle = ActiveNodePresenter?.Model.Title ?? "Bilinmeyen";
             Debug.Log($"ScenarioManager: Bir sonraki node'a geçilecek. Şu anki node: {currentNodeTitle}");
             
-            ActiveNodePresenter.GoToNextNode();
+            ActiveNodePresenter?.OnSkipNode();
             
             string nextNodeTitle = ActiveNodePresenter?.Model.Title ?? "Bilinmeyen"; 
             Debug.Log($"ScenarioManager: Bir sonraki node'a geçildi: {nextNodeTitle}");
@@ -139,7 +215,7 @@ namespace Managers
             string currentNodeTitle = ActiveNodePresenter?.Model.Title ?? "Bilinmeyen";
             Debug.Log($"ScenarioManager: Bir önceki node'a geçilecek. Şu anki node: {currentNodeTitle}");
             
-            ActiveNodePresenter.GoToPreviousNode();
+            ActiveNodePresenter?.GoToPreviousNode();
             
             string prevNodeTitle = ActiveNodePresenter?.Model.Title ?? "Bilinmeyen";
             Debug.Log($"ScenarioManager: Bir önceki node'a geçildi: {prevNodeTitle}");
@@ -327,5 +403,61 @@ namespace Managers
             Debug.LogWarning("ScenarioManager: GetCurrentNodeInfo çağrıldı ancak aktif node yok!");
             return ("", "", -1);
         }
+
+        #region Edit Mode Functions
+
+        /// <summary>
+        /// Tüm node'larda düzenleme modunu açar. Senaryo bittiğinde çağrılır.
+        /// </summary>
+        public void EditModeOn()
+        {
+            Debug.Log("ScenarioManager: EditModeOn çağrıldı - Tüm düzenleme UI elemanları gösterilecek");
+            
+            // GraphManager'dan tüm nodeları al
+            if (_graphManager != null && _graphManager.NodePresenters != null)
+            {
+                foreach (var node in _graphManager.NodePresenters)
+                {
+                    if (node != null)
+                    {
+                        node.EditModeOn();
+                    }
+                }
+                
+                Debug.Log($"ScenarioManager: EditModeOn tamamlandı - {_graphManager.NodePresenters.Count} node'da düzenleme modu açıldı");
+            }
+            else
+            {
+                Debug.LogWarning("ScenarioManager: EditModeOn çağrıldı ancak GraphManager veya NodePresenters null!");
+            }
+        }
+
+        /// <summary>
+        /// Tüm node'larda düzenleme modunu kapatır. Senaryo başladığında çağrılır.
+        /// </summary>
+        public void EditModeOff()
+        {
+            Debug.Log("ScenarioManager: EditModeOff çağrıldı - Tüm düzenleme UI elemanları gizlenecek");
+            
+            // GraphManager'dan tüm nodeları al
+            if (_graphManager != null && _graphManager.NodePresenters != null)
+            {
+                foreach (var node in _graphManager.NodePresenters)
+                {
+                    if (node != null)
+                    {
+                        node.EditModeOff();
+                    }
+                }
+                
+                Debug.Log($"ScenarioManager: EditModeOff tamamlandı - {_graphManager.NodePresenters.Count} node'da düzenleme modu kapatıldı");
+            }
+            else
+            {
+                Debug.LogWarning("ScenarioManager: EditModeOff çağrıldı ancak GraphManager veya NodePresenters null!");
+            }
+        }
+
+        #endregion
     }
 }
