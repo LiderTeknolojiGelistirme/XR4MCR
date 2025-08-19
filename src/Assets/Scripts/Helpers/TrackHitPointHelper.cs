@@ -9,16 +9,16 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 public class TrackHitPointHelper : MonoBehaviour
 {
-    [HideInInspector] public XRRayInteractor xrRayInteractor;
+    [HideInInspector] public XRInputManager inputManager;
     
     void Start()
     {
-        xrRayInteractor = FindObjectOfType<XRRayInteractor>();
+        inputManager = FindObjectOfType<XRInputManager>();
     }
     private void Update()
     {
         
-        if (xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+        if (inputManager != null && inputManager.TryGetPrecisionRaycastHit(out RaycastHit hit))
             gameObject.transform.position = hit.point;
     }
 }

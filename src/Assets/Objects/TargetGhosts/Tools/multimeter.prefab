@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: -2748692184206489685}
   - component: {fileID: 857031217603277195}
   - component: {fileID: 5247581389703388243}
-  - component: {fileID: 471836312864236459}
+  - component: {fileID: 7230812233833566649}
   m_Layer: 0
   m_Name: multimeter
   m_TagString: Untagged
@@ -375,7 +375,7 @@ MonoBehaviour:
   allowDirectInteraction: 1
   allowRayInteraction: 1
   allowDistanceSelectInteraction: 1
---- !u!114 &471836312864236459
+--- !u!114 &7230812233833566649
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -384,7 +384,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7258402761534334763}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 19

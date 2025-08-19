@@ -145,7 +145,7 @@ GameObject:
   - component: {fileID: 2470335249166770081}
   - component: {fileID: 2187657381514770295}
   - component: {fileID: 1602769563919658455}
-  - component: {fileID: -4528978754231797717}
+  - component: {fileID: 9127058980635023083}
   m_Layer: 15
   m_Name: RobotArmGrabbableCube
   m_TagString: Untagged
@@ -540,7 +540,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tag: RobotArmGrabbableCube
---- !u!114 &-4528978754231797717
+--- !u!114 &9127058980635023083
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -549,10 +549,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 944363728924959158}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 0
 --- !u!1 &1029344537181249686
 GameObject:
   m_ObjectHideFlags: 0

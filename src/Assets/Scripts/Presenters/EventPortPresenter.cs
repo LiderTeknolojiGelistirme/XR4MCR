@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using Presenters.NodePresenters;
 using NodeSystem;
 using Models.Nodes;
+using Managers; // LogManager için eklendi
 
 namespace Presenters
 {
@@ -34,10 +35,10 @@ namespace Presenters
             {
                 _eventPortImage.color = _eventPortColor;
             }
-            
-            // Kontrol noktasının açısını doğru bir şekilde ayarla
-            // Bu, bağlantının doğrudan sağa doğru çıkmasını sağlar
-            //SetControlPointDistanceAngle(50, 0);
+            else
+            {
+                LogManager.LogWarning("[EventPortPresenter] Event port image komponenti bulunamadı!");
+            }
         }
         
         // Override ederek EventPort model tipini kullanacağız
@@ -66,50 +67,48 @@ namespace Presenters
                 {
                     BaseNodePresenter targetNodePresenter = FindParentNodePresenter(targetPortPresenter);
 
-
-                    //if (targetPortPresenter.CompareTag("StopInput") && targetNodePresenter != null)
-                    //{
-                    //    ActionNodePresenter actionNodePresenter = targetNodePresenter as ActionNodePresenter;
-                    //    if (actionNodePresenter is AudioActionNodePresenter)
-                    //    {
-                    //        //StopLoop burada çağıralacak
-                    //    }
-                    //}
-                    //// Hedef portun node'unu bulalım
-
-                    
-
-
                     if (targetNodePresenter != null)
                     {
-                        Debug.Log($"Event tetiklendi: {EventType} -> {targetNodePresenter.Model.Title}");
-
-
-
                         if (targetPortPresenter.CompareTag("RemoveInput") && targetNodePresenter != null)
                         {
                             DescriptionActionNodePresenter actionNodePresenter = targetNodePresenter as DescriptionActionNodePresenter;
 
-                            actionNodePresenter.PerformRemove();
-                           
+                            if (actionNodePresenter != null)
+                            {
+                                actionNodePresenter.PerformRemove();
+                            }
+                            else
+                            {
+                                LogManager.LogError("[EventPortPresenter] DescriptionActionNodePresenter cast edilemedi!");
+                            }
                         }
-
                         else if (targetPortPresenter.CompareTag("StopInput") && targetNodePresenter != null)
                         {
                             ActionNodePresenter actionNodePresenter = targetNodePresenter as ActionNodePresenter;
 
-                            actionNodePresenter.StopAction();
-
+                            if (actionNodePresenter != null)
+                            {
+                                actionNodePresenter.StopAction();
+                            }
+                            else
+                            {
+                                LogManager.LogError("[EventPortPresenter] ActionNodePresenter cast edilemedi!");
+                            }
                         }
-
-                        //// Hedef portun node'unu bulalım
                         else
                         {
                             // Node'u çalıştır
                             targetNodePresenter.Play();
                         }
-                        
                     }
+                    else
+                    {
+                        LogManager.LogError("[EventPortPresenter] Hedef node presenter bulunamadı!");
+                    }
+                }
+                else
+                {
+                    LogManager.LogError("[EventPortPresenter] Hedef port presenter null!");
                 }
             }
         }
@@ -118,13 +117,17 @@ namespace Presenters
         private BaseNodePresenter FindParentNodePresenter(PortPresenter portPresenter)
         {
             if (portPresenter == null) 
+            {
+                LogManager.LogWarning("[EventPortPresenter] FindParentNodePresenter: PortPresenter null!");
                 return null;
+            }
                 
             // Portu içeren transform'dan başlayarak yukarı doğru node arıyoruz
             Transform current = portPresenter.transform;
+            int searchDepth = 0;
             
             // Yukarı doğru giderek node'u bulalım
-            while (current != null)
+            while (current != null && searchDepth < 10) // Sonsuz döngüyü önlemek için limit
             {
                 // Bu GameObject bir BaseNodePresenter içeriyor mu?
                 BaseNodePresenter nodePresenter = current.GetComponent<BaseNodePresenter>();
@@ -135,8 +138,10 @@ namespace Presenters
                 
                 // Bir üst transform'a geç
                 current = current.parent;
+                searchDepth++;
             }
             
+            LogManager.LogError($"[EventPortPresenter] BaseNodePresenter bulunamadı! Arama derinliği: {searchDepth}");
             return null;
         }
     }

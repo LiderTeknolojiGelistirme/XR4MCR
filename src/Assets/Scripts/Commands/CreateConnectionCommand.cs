@@ -22,9 +22,9 @@ namespace Commands
             _sourcePortId = sourcePortPresenter.Model.ID;
             _targetPortId = targetPortPresenter.Model.ID;
         }
-        public void Execute()
+        public async void Execute()
         {
-            _connectionPresenter = _sourcePortPresenter.ConnectTo(_targetPortPresenter);
+            _connectionPresenter =  _sourcePortPresenter.ConnectTo(_targetPortPresenter);
             _graphManager.UpdateConnectionsLine();
         }
 
@@ -34,7 +34,7 @@ namespace Commands
             _graphManager.UpdateConnectionsLine();
         }
 
-        public void Redo()
+        public async void Redo()
         {
             if (_sourcePortPresenter == null)
             {
@@ -76,7 +76,7 @@ namespace Commands
                     }
                 }
             }
-            _connectionPresenter = _sourcePortPresenter.ConnectTo(_targetPortPresenter);
+            _connectionPresenter =  _sourcePortPresenter.ConnectTo(_targetPortPresenter);
             _graphManager.UpdateConnectionsLine();
         }
     }

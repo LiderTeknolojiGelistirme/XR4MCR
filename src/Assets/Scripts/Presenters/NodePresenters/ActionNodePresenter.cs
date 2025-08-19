@@ -34,7 +34,7 @@ namespace Presenters.NodePresenters
         
         public override void Play()
         {
-            Debug.Log($"ActionNodePresenter.Play çalıştırıldı: {Model.Title}");
+            //Debug.Log($"ActionNodePresenter.Play çalıştırıldı: {Model.Title}");
             
             // Action'ı yürüt
             PerformAction();
@@ -43,7 +43,7 @@ namespace Presenters.NodePresenters
         protected virtual async void PerformAction()
         {
             // Alt sınıflar tarafından uygulanacak
-            Debug.Log($"ActionNodePresenter.PerformAction çağrıldı: Tip={ActionModel.Type}, Hedef={ActionModel.TargetObjectID}");
+            //Debug.Log($"ActionNodePresenter.PerformAction çağrıldı: Tip={ActionModel.Type}, Hedef={ActionModel.TargetObjectID}");
 
             await PerformActionAsync();
 

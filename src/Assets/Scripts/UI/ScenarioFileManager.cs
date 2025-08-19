@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -65,7 +66,7 @@ namespace UI
 
         // Events
         public static event System.Action<string> OnSaveRequested;
-        public static event System.Action<string> OnLoadRequested;
+        public static event System.Func<string, Task> OnLoadRequested;
 
         // Private members
         private string selectedFileName;
@@ -80,6 +81,8 @@ namespace UI
             NewScenario
         }
         private ConfirmationMode currentConfirmationMode;
+        private string lastFilePath;
+
 
         [Inject]
         public void Construct(XRKeyboard keyboard, GraphManager graphManagerInstance)
@@ -519,12 +522,12 @@ namespace UI
             headerRect.anchorMin = new Vector2(0, 1);
             headerRect.anchorMax = new Vector2(0, 1);
             headerRect.pivot = new Vector2(0.5f, 0.5f);
-            headerRect.sizeDelta = new Vector2(735, 40);
+            headerRect.sizeDelta = new Vector2(735, 50);
             
             // LayoutElement
             var headerLayoutElement = headerObj.AddComponent<LayoutElement>();
-            headerLayoutElement.minHeight = 40f;
-            headerLayoutElement.preferredHeight = 40f;
+            headerLayoutElement.minHeight = 50f;
+            headerLayoutElement.preferredHeight = 50f;
             headerLayoutElement.layoutPriority = 2; // Header öncelikli
             
             // Header background
@@ -619,11 +622,11 @@ namespace UI
             rect.pivot = new Vector2(0.5f, 0.5f);  // Pivot: X=0.5, Y=0.5
             
             // Size - Inspector'dan
-            rect.sizeDelta = new Vector2(735, 35.94f); // Width=735, Height=35.94
+            rect.sizeDelta = new Vector2(735, 64f); // Width=735, Height=64
             
             // LayoutElement - Inspector ayarları
             var layoutElement = item.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 35.94f;
+            layoutElement.minHeight = 64f;
             layoutElement.preferredHeight = -1;    // Unchecked
             layoutElement.flexibleHeight = -1;     // Unchecked
             layoutElement.minWidth = -1;           // Unchecked
@@ -994,7 +997,7 @@ namespace UI
             CloseAllPopups();
         }
 
-        private void OnLoadOkClicked()
+        private async void OnLoadOkClicked()
         {
             if (string.IsNullOrEmpty(selectedFileName))
             {
@@ -1003,10 +1006,15 @@ namespace UI
             }
 
             string filePath = GetFullFilePath(selectedFileName);
+
+            lastFilePath = filePath;
             
             if (File.Exists(filePath))
             {
-                OnLoadRequested?.Invoke(filePath);
+                if (OnLoadRequested != null)
+                {
+                    await OnLoadRequested.Invoke(filePath);
+                }
                 CloseAllPopups();
 
             }
@@ -1277,6 +1285,22 @@ namespace UI
             
             ClearFileList();
         }
+
+        internal async void ReloadScenario()
+        {
+            if (File.Exists(lastFilePath))
+            {
+                if (OnLoadRequested != null)
+                {
+                    await OnLoadRequested.Invoke(lastFilePath);
+                }
+            }
+            else
+            {
+                LogManager.LogWarning("ScenarioFileManager: Last file path not found");
+            }
+        }
+
 
         #endregion
     }

@@ -795,7 +795,7 @@ MonoBehaviour:
   interactWithHands: 3
   allowDirectInteraction: 1
   allowRayInteraction: 0
-  allowDistanceSelectInteraction: 1
+  allowDistanceSelectInteraction: 0
 --- !u!114 &1278178819008146482
 MonoBehaviour:
   m_ObjectHideFlags: 0

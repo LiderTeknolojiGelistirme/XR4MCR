@@ -1079,7 +1079,7 @@ GameObject:
   - component: {fileID: 7396491402296730021}
   - component: {fileID: 1335985347332329510}
   - component: {fileID: 2223906809487179906}
-  - component: {fileID: -6772292469730717084}
+  - component: {fileID: 8427644894706751070}
   m_Layer: 0
   m_Name: UR10e_Object
   m_TagString: Untagged
@@ -1398,7 +1398,7 @@ MonoBehaviour:
   allowDirectInteraction: 1
   allowRayInteraction: 1
   allowDistanceSelectInteraction: 1
---- !u!114 &-6772292469730717084
+--- !u!114 &8427644894706751070
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1407,10 +1407,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6964343928110803759}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 0
 --- !u!1 &7728831917472653197
 GameObject:
   m_ObjectHideFlags: 0

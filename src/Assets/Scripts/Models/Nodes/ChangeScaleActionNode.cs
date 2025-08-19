@@ -9,9 +9,12 @@ namespace Models.Nodes
     [Serializable]
     public class ChangeScaleActionNode : ActionNode
     {
-        // Seçili nesne bilgileri
+        // Seçili nesne bilgileri (GrabNode sistemine benzer)
         public string SelectedObjectName { get; set; }
-        public string SelectedObjectID { get; set; }
+        public string SelectedObjectID { get; set; }  // Parent nesnenin ID'si (her zaman)
+        public int SelectedChildIndex { get; set; } = -1;  // -1 = parent seçili, 0+ = child index
+        public string SelectedChildName { get; set; }  // Child nesnesinin ismi (name-based, GrabNode ile uyumlu)
+        public bool IsChildObjectEnabled { get; set; }
         
         // Target scale bilgileri
         public float TargetScaleX { get; set; } = 1.0f;

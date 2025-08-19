@@ -6,6 +6,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using Viroo.Interactions.Grab;
 using Managers;
 using Models.Nodes;
+using _3rd_Party.Outline;
 
 namespace Presenters.NodePresenters
 {
@@ -100,7 +101,7 @@ namespace Presenters.NodePresenters
                 if (IsToolTouchingTarget())
                 {
                     LogManager.LogInteraction($"Tool {_toolInteractable.gameObject.name} is touching target {_targetInteractable.gameObject.name}");
-                    LogManager.LogWarning($"About to call CompleteNode - IsStarted: {Model.IsStarted}, IsCompleted: {Model.IsCompleted}");
+                    //LogManager.LogWarning($"About to call CompleteNode - IsStarted: {Model.IsStarted}, IsCompleted: {Model.IsCompleted}");
                     CompleteNode();
                 }
             }
@@ -684,11 +685,172 @@ namespace Presenters.NodePresenters
             return null;
         }
 
+        /// <summary>
+        /// Tool objesinin outline'ını etkinleştirir
+        /// </summary>
+        private void EnableToolOutline()
+        {
+            GameObject toolObject = GetToolObject();
+            if (toolObject != null)
+            {
+                _3rd_Party.Outline.Outline outline = toolObject.GetComponent<_3rd_Party.Outline.Outline>();
+                if (outline != null)
+                {
+                    outline.enabled = true;
+                    LogManager.LogSuccess($"ToolTouchNode: Tool outline enabled for {toolObject.name}");
+                }
+                else
+                {
+                    LogManager.LogWarning($"ToolTouchNode: No outline component found on tool {toolObject.name}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Target objesinin outline'ını etkinleştirir
+        /// </summary>
+        private void EnableTargetOutline()
+        {
+            GameObject targetObject = GetTargetObject();
+            if (targetObject != null)
+            {
+                _3rd_Party.Outline.Outline outline = targetObject.GetComponent<_3rd_Party.Outline.Outline>();
+                if (outline != null)
+                {
+                    outline.enabled = true;
+                    LogManager.LogSuccess($"ToolTouchNode: Target outline enabled for {targetObject.name}");
+                }
+                else
+                {
+                    LogManager.LogWarning($"ToolTouchNode: No outline component found on target {targetObject.name}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Tool objesinin outline'ını devre dışı bırakır
+        /// </summary>
+        private void DisableToolOutline()
+        {
+            GameObject toolObject = GetToolObject();
+            if (toolObject != null)
+            {
+                _3rd_Party.Outline.Outline outline = toolObject.GetComponent<_3rd_Party.Outline.Outline>();
+                if (outline != null)
+                {
+                    outline.enabled = false;
+                    LogManager.LogSuccess($"ToolTouchNode: Tool outline disabled for {toolObject.name}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Target objesinin outline'ını devre dışı bırakır
+        /// </summary>
+        private void DisableTargetOutline()
+        {
+            GameObject targetObject = GetTargetObject();
+            if (targetObject != null)
+            {
+                _3rd_Party.Outline.Outline outline = targetObject.GetComponent<_3rd_Party.Outline.Outline>();
+                if (outline != null)
+                {
+                    outline.enabled = false;
+                    LogManager.LogSuccess($"ToolTouchNode: Target outline disabled for {targetObject.name}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Tool objesini döndürür
+        /// </summary>
+        private GameObject GetToolObject()
+        {
+            if (ToolTouchNodeModel == null || string.IsNullOrEmpty(ToolTouchNodeModel.ToolObjectID))
+                return null;
+
+            return FindObjectByID(ToolTouchNodeModel.ToolObjectID);
+        }
+
+        /// <summary>
+        /// Target objesini döndürür (parent veya child)
+        /// </summary>
+        private GameObject GetTargetObject()
+        {
+            if (ToolTouchNodeModel == null || string.IsNullOrEmpty(ToolTouchNodeModel.TargetObjectID))
+                return null;
+
+            GameObject parentObject = FindObjectByID(ToolTouchNodeModel.TargetObjectID);
+            if (parentObject == null)
+                return null;
+
+            // Child seçili ise child'ı döndür
+            if (ToolTouchNodeModel.IsTargetChildEnabled && !string.IsNullOrEmpty(ToolTouchNodeModel.TargetChildName))
+            {
+                Transform childTransform = FindChildByNameRecursive(parentObject.transform, ToolTouchNodeModel.TargetChildName);
+                if (childTransform != null)
+                {
+                    return childTransform.gameObject;
+                }
+            }
+
+            // Parent'ı döndür
+            return parentObject;
+        }
+
         #region Runtime Collider Management
 
         public override void StartNode()
         {
             base.StartNode();
+            
+            // Tool grab edilebilir yap (tutulabilir olmalı)
+            if (_toolInteractable != null)
+            {
+                // Tool için XRGrabInteractable bileşenini aktif et
+                GameObject toolObject = GetToolObject();
+                if (toolObject != null)
+                {
+                    var grabInteractable = toolObject.GetComponent<XRGrabInteractable>();
+                    if (grabInteractable != null)
+                    {
+                        grabInteractable.enabled = true;
+                        LogManager.Log($"ToolTouchNode: Enabled tool grab interactable for {toolObject.name}");
+                    }
+                }
+                
+                // Tool'un base interactable'ı aktif kalmalı (çarpışma algılama için)
+                _toolInteractable.enabled = true;
+                LogManager.Log($"ToolTouchNode: Enabled tool interactable for {_toolInteractable.gameObject.name}");
+            }
+            
+            // Target grab edilebilir yapma (tutulabilir olmamalı)  
+            if (_targetInteractable != null)
+            {
+                GameObject targetObject = GetTargetObject();
+                if (targetObject != null)
+                {
+                    // Target için XRGrabInteractable bileşenini devre dışı bırak
+                    var grabInteractable = targetObject.GetComponent<XRGrabInteractable>();
+                    if (grabInteractable != null)
+                    {
+                        grabInteractable.enabled = false;
+                        LogManager.Log($"ToolTouchNode: Disabled target grab interactable for {targetObject.name}");
+                    }
+                    
+                    // Target'ın collider'ını aktif tut (çarpışma algılama için)
+                    var targetCollider = targetObject.GetComponent<Collider>();
+                    if (targetCollider != null)
+                    {
+                        targetCollider.enabled = true;
+                        LogManager.Log($"ToolTouchNode: Ensured target collider is active for collision detection: {targetObject.name}");
+                    }
+                }
+                
+                // Target'ın interactable'ı da devre dışı (tutulabilir olmamalı)
+                _targetInteractable.enabled = false;
+                LogManager.Log($"ToolTouchNode: Disabled target interactable (non-grabbable) for {_targetInteractable.gameObject.name}");
+            }
             
             // Runtime'da child seçili ise collider'ları ayarla
             if (_targetInteractable != null && ToolTouchNodeModel != null && ToolTouchNodeModel.IsTargetChildEnabled)
@@ -696,12 +858,46 @@ namespace Presenters.NodePresenters
                 ActivateRuntimeChildColliders();
             }
             
+            // Tool ve target objelerin outline'ını aktif et
+            EnableToolOutline();
+            EnableTargetOutline();
+            
             LogManager.LogSuccess($"ToolTouchNode StartNode - IsStarted: {Model.IsStarted}, IsCompleted: {Model.IsCompleted}");
         }
 
         public override void CompleteNode()
         {
             LogManager.LogSuccess($"ToolTouchNode CompleteNode called - IsCompleted: {Model.IsCompleted}");
+            
+            // Tool ve target objelerin outline'ını deaktif et
+            DisableToolOutline();
+            DisableTargetOutline();
+            
+            // Tool interactable'ını disable et
+            if (_toolInteractable != null)
+            {
+                // Tool için XRGrabInteractable bileşenini devre dışı bırak
+                GameObject toolObject = GetToolObject();
+                if (toolObject != null)
+                {
+                    var grabInteractable = toolObject.GetComponent<XRGrabInteractable>();
+                    if (grabInteractable != null)
+                    {
+                        grabInteractable.enabled = false;
+                        LogManager.Log($"ToolTouchNode: Disabled tool grab interactable for {toolObject.name}");
+                    }
+                }
+                
+                _toolInteractable.enabled = false;
+                LogManager.Log($"ToolTouchNode: Disabled tool interactable for {_toolInteractable.gameObject.name}");
+            }
+            
+            // Target interactable'ını disable et
+            if (_targetInteractable != null)
+            {
+                _targetInteractable.enabled = false;
+                LogManager.Log($"ToolTouchNode: Disabled target interactable for {_targetInteractable.gameObject.name}");
+            }
             
             // Runtime'dan configuration moduna dön - Model'den parent nesneyi bul
             if (!string.IsNullOrEmpty(ToolTouchNodeModel.TargetObjectID))
@@ -721,6 +917,32 @@ namespace Presenters.NodePresenters
 
         public override void OnSkipNode()
         {
+            // Tool interactable'ını disable et
+            if (_toolInteractable != null)
+            {
+                // Tool için XRGrabInteractable bileşenini devre dışı bırak
+                GameObject toolObject = GetToolObject();
+                if (toolObject != null)
+                {
+                    var grabInteractable = toolObject.GetComponent<XRGrabInteractable>();
+                    if (grabInteractable != null)
+                    {
+                        grabInteractable.enabled = false;
+                        LogManager.Log($"ToolTouchNode: Disabled tool grab interactable for {toolObject.name}");
+                    }
+                }
+                
+                _toolInteractable.enabled = false;
+                LogManager.Log($"ToolTouchNode: Disabled tool interactable for {_toolInteractable.gameObject.name}");
+            }
+            
+            // Target interactable'ını disable et
+            if (_targetInteractable != null)
+            {
+                _targetInteractable.enabled = false;
+                LogManager.Log($"ToolTouchNode: Disabled target interactable for {_targetInteractable.gameObject.name}");
+            }
+            
             // Runtime'dan configuration moduna dön - Model'den parent nesneyi bul
             if (!string.IsNullOrEmpty(ToolTouchNodeModel.TargetObjectID))
             {

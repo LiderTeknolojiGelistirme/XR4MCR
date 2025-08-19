@@ -101,6 +101,7 @@ namespace Presenters.NodePresenters
 
         protected override void PerformAction()
         {
+
             if (_simpleInteractable != null && _instantiatedTargetGhostGameObject != null)
             {
                 GameObject objectToMove = _simpleInteractable;
@@ -224,7 +225,7 @@ namespace Presenters.NodePresenters
                 ChangePositionModel.TargetPosZ = 0f;
             }
 
-            // Target ghost nesnesini güncelle (eğer zaten varsa)
+            // Target ghost nesnesini güncelle (eğer zaten varsa) - Her zaman parent nesnenin target ghost'unu kullan
             if (_instantiatedTargetGhostGameObject != null)
             {
                 var interactionHelper = _simpleInteractable.GetComponent<InteractionHelper>();
@@ -372,16 +373,32 @@ namespace Presenters.NodePresenters
                 return;
             }
 
-            var interactionHelper = _simpleInteractable.GetComponent<InteractionHelper>();
+            // Child seçiliyse child objesinin InteractionHelper'ını kullan
+            GameObject targetObject = _simpleInteractable;
+            if (ChangePositionModel != null && ChangePositionModel.IsChildObjectEnabled && !string.IsNullOrEmpty(ChangePositionModel.SelectedChildName))
+            {
+                Transform childTransform = FindChildByNameRecursive(_simpleInteractable.transform, ChangePositionModel.SelectedChildName);
+                if (childTransform != null)
+                {
+                    targetObject = childTransform.gameObject;
+                    LogManager.Log($"Using child object's target ghost: {childTransform.name}");
+                }
+                else
+                {
+                    LogManager.LogWarning($"Child object not found: {ChangePositionModel.SelectedChildName}, using parent's target ghost");
+                }
+            }
+
+            var interactionHelper = targetObject.GetComponent<InteractionHelper>();
             if (interactionHelper == null)
             {
-                LogManager.LogError($"Selected object {_simpleInteractable.name} does not have InteractionHelper component");
+                LogManager.LogError($"Selected object {targetObject.name} does not have InteractionHelper component");
                 return;
             }
 
             if (interactionHelper.targetGhostPrefab == null)
             {
-                LogManager.LogError($"InteractionHelper on {_simpleInteractable.name} does not have targetGhostPrefab assigned");
+                LogManager.LogError($"InteractionHelper on {targetObject.name} does not have targetGhostPrefab assigned");
                 return;
             }
 
@@ -392,14 +409,14 @@ namespace Presenters.NodePresenters
                     XRInputManager.xrRayInteractor.transform);
                 
                 _holdingTarget = true;
-                LogManager.LogSuccess("Target position selection started");
+                LogManager.LogSuccess($"Target position selection started for: {targetObject.name}");
             }
             else
             {
                 _instantiatedTargetGhostGameObject.transform.SetParent(XRInputManager.xrRayInteractor.transform);
                 _instantiatedTargetGhostGameObject.transform.localPosition = Vector3.zero;
                 _holdingTarget = true;
-                LogManager.LogSuccess("Target position selection restarted");
+                LogManager.LogSuccess($"Target position selection restarted for: {targetObject.name}");
             }
         }
 
@@ -550,7 +567,23 @@ namespace Presenters.NodePresenters
             {
                 Vector3 targetPosition = new Vector3(ChangePositionModel.TargetPosX, ChangePositionModel.TargetPosY, ChangePositionModel.TargetPosZ);
                 
-                var interactionHelper = _simpleInteractable.GetComponent<InteractionHelper>();
+                // Child seçiliyse child objesinin InteractionHelper'ını kullan
+                GameObject targetObject = _simpleInteractable;
+                if (ChangePositionModel.IsChildObjectEnabled && !string.IsNullOrEmpty(ChangePositionModel.SelectedChildName))
+                {
+                    Transform childTransform = FindChildByNameRecursive(parentObject.transform, ChangePositionModel.SelectedChildName);
+                    if (childTransform != null)
+                    {
+                        targetObject = childTransform.gameObject;
+                        LogManager.Log($"Restoring target ghost for child object: {childTransform.name}");
+                    }
+                    else
+                    {
+                        LogManager.LogWarning($"Child object not found during restore: {ChangePositionModel.SelectedChildName}, using parent's target ghost");
+                    }
+                }
+                
+                var interactionHelper = targetObject.GetComponent<InteractionHelper>();
                 if (interactionHelper != null && interactionHelper.targetGhostPrefab != null)
                 {
                     // Eski target ghost varsa temizle
@@ -565,11 +598,11 @@ namespace Presenters.NodePresenters
                         GameObject.Find("Root").transform);
                     _instantiatedTargetGhostGameObject.transform.position = targetPosition;
                     
-                    LogManager.LogSuccess($"ChangePosition: Target ghost restored at position: {targetPosition}");
+                    LogManager.LogSuccess($"ChangePosition: Target ghost restored at position: {targetPosition} for object: {targetObject.name}");
                 }
                 else
                 {
-                    LogManager.LogError($"ChangePosition: InteractionHelper or targetGhostPrefab not found on {_simpleInteractable.name}");
+                    LogManager.LogError($"ChangePosition: InteractionHelper or targetGhostPrefab not found on {targetObject.name}");
                 }
             }
             else

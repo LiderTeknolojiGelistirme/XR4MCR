@@ -8,6 +8,10 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using Viroo.Cameras;
 using Zenject;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using Presenters;
+using Interfaces;
 
 namespace Managers
 {
@@ -210,7 +214,7 @@ namespace Managers
             {
                 if (xrRayInteractor != null && xrRayInteractor.gameObject.activeInHierarchy)
                 {
-                    if (xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+                    if (TryGetPrecisionRaycastHit(out RaycastHit hit))
                     {
                         if (Camera.main == null)
                         {
@@ -225,55 +229,30 @@ namespace Managers
             }
         }
 
-        //public override Vector3 GetCanvasPointerPosition(GraphManager graphManager)
-        //{
-        //    if (xrRayInteractor == null)
-        //    {
-        //        xrRayInteractor = FindObjectOfType<XRRayInteractor>();
-        //        if (xrRayInteractor == null)
-        //        {
-        //            Debug.LogWarning("XRRayInteractor sahnede bulunamadı.");
-        //            return Vector3.zero;
-        //        }
-        //    }
-
-        //    // Raycast hit kontrolü yapıyoruz
-        //    if (xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
-        //    {
-        //        if (hit.collider != null) // Raycast bir collider'a çarptıysa
-        //        {
-        //            // Raycast'in çarptığı dünya pozisyonunu alıyoruz
-        //            Vector3 worldHitPoint = hit.point;
-
-
-
-        //            // Canvas'ın RectTransform'unu al
-        //            RectTransform canvasRect = graphManager.contentTransform;
-        //            if (canvasRect == null) return Vector3.zero;
-
-
-        //            Vector3 localPoint = canvasRect.InverseTransformPoint(worldHitPoint);
-
-        //            Vector3 contentSize = canvasRect.sizeDelta;
-
-        //            localPoint = new Vector3(
-        //                Mathf.Round(localPoint.x / contentSize.x) * contentSize.x,
-        //                Mathf.Round(localPoint.y / contentSize.y) * contentSize.y,
-        //                0 // Z değerini 0 yapıyoruz
-        //            );
-
-
-        //        }
-        //        else
-        //        {
-        //            // Eğer raycast bir collider'a çarpmadıysa
-        //            Debug.Log("Raycast didn't hit anything.");
-        //            return Vector3.zero;
-        //        }
-        //    }
-
-        //    return Vector3.zero;
-        //}
+        // PRECISION RAYCAST - Sphere cast yerine ince raycast kullanır
+        public override bool TryGetPrecisionRaycastHit(out RaycastHit hit)
+        {
+            hit = default(RaycastHit);
+            
+            if (xrRayInteractor == null || xrRayInteractor.rayOriginTransform == null)
+                return false;
+            
+            // Ray origin ve direction al
+            Transform rayOrigin = xrRayInteractor.rayOriginTransform;
+            Vector3 origin = rayOrigin.position;
+            Vector3 direction = rayOrigin.forward;
+            
+            // Max distance
+            float maxDistance = 10f;
+            
+            // LayerMask - UI ve RayInteraction layer'larını dahil et
+            LayerMask layerMask = (1 << LayerMask.NameToLayer("UI")) | (1 << LayerMask.NameToLayer("RayInteraction")) | (1 << LayerMask.NameToLayer("Default"));
+            
+            // PRECISION PHYSICS RAYCAST - İnce çizgi raycast
+            bool hasHit = Physics.Raycast(origin, direction, out hit, maxDistance, layerMask, QueryTriggerInteraction.Collide);
+            
+            return hasHit;
+        }
 
         public override Vector3 GetCanvasPointerPosition(GraphManager graphManager)
         {
@@ -288,7 +267,7 @@ namespace Managers
                 }
             }
 
-            if (xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+            if (TryGetPrecisionRaycastHit(out RaycastHit hit))
             {
                 Vector3 worldHitPoint = hit.point;
 
@@ -354,7 +333,7 @@ namespace Managers
             }
             else if (XRDragging())
             {
-                if (xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+                if (TryGetPrecisionRaycastHit(out RaycastHit hit))
                 {
                     e_OnDrag.Invoke(hit.point);
                 }
@@ -438,8 +417,101 @@ namespace Managers
 
         public void OnDeleteKeyPressed()
         {
-            Debug.Log("DDeleteButtonPRESEEDD");
-            e_OnDelete.Invoke();
+            Debug.Log("OnDeleteKeyPressed çağrıldı!");
+            LogManager.LogInput("OnDeleteKeyPressed çağrıldı!");
+            
+            bool hasDeletedSomething = false;
+            
+            // 1. Önce SystemManager'daki selectedElements'ı kontrol et (UI Node'lar için)
+            if (_systemManager != null)
+            {
+                Debug.Log($"Seçili eleman sayısı: {_systemManager.selectedElements.Count}");
+                LogManager.LogInput($"Seçili eleman sayısı: {_systemManager.selectedElements.Count}");
+                
+                // ÖNEMLI: Seçili elemanların kopyasını al
+                var selectedElementsCopy = _systemManager.selectedElements.ToList();
+                
+                for (int i = 0; i < selectedElementsCopy.Count; i++)
+                {
+                    var element = selectedElementsCopy[i];
+                    Debug.Log($"Seçili eleman {i}: {element?.GetType().Name} - {(element as BaseNodePresenter)?.Model?.Title}");
+                    LogManager.LogInput($"Seçili eleman {i}: {element?.GetType().Name} - {(element as BaseNodePresenter)?.Model?.Title}");
+                }
+                
+                // Eğer kopyada eleman varsa direkt sil
+                if (selectedElementsCopy.Count > 0)
+                {
+                    Debug.Log("Seçili elemanlar bulundu, direkt silme işlemi başlatılıyor...");
+                    LogManager.LogInput("Seçili elemanlar bulundu, direkt silme işlemi başlatılıyor...");
+                    
+                    // Direkt silme işlemini burada yap
+                    for (int i = selectedElementsCopy.Count - 1; i >= 0; i--)
+                    {
+                        var element = selectedElementsCopy[i];
+                        Debug.Log($"Siliniyor: {element?.GetType().Name}");
+                        LogManager.LogInput($"Siliniyor: {element?.GetType().Name}");
+                        element.Remove();
+                    }
+                    
+                    Debug.Log("Direkt silme işlemi tamamlandı.");
+                    LogManager.LogInput("Direkt silme işlemi tamamlandı.");
+                    hasDeletedSomething = true;
+                }
+            }
+            else
+            {
+                Debug.Log("SystemManager null!");
+                LogManager.LogError("SystemManager null!");
+            }
+            
+            // 2. SystemManager'daki Selected3DObject'i kontrol et (TransformGizmo ile seçilen nesneler için)
+            if (_systemManager != null && _systemManager.Selected3DObject != null)
+            {
+                var selectedObject = _systemManager.Selected3DObject;
+                Debug.Log($"Seçili 3D obje bulundu: {selectedObject.name}");
+                LogManager.LogInput($"Seçili 3D obje bulundu: {selectedObject.name}");
+                
+                // ObjectPresenter'ını bul ve Remove() çağır
+                var objectPresenter = selectedObject.GetComponent<ObjectPresenter>();
+                if (objectPresenter != null)
+                {
+                    Debug.Log($"ObjectPresenter bulundu, siliniyor: {selectedObject.name}");
+                    LogManager.LogInput($"ObjectPresenter bulundu, siliniyor: {selectedObject.name}");
+                    objectPresenter.Remove();
+                    hasDeletedSomething = true;
+                    
+                    // TransformGizmo'nun seçimlerini temizle
+                    if (_systemManager._transformGizmo != null)
+                    {
+                        _systemManager._transformGizmo.ClearTargets();
+                        Debug.Log("TransformGizmo seçimleri temizlendi.");
+                        LogManager.LogInput("TransformGizmo seçimleri temizlendi.");
+                    }
+                    
+                    // Selected3DObject'i temizle
+                    _systemManager.Selected3DObject = null;
+                }
+                else
+                {
+                    Debug.Log($"ObjectPresenter bulunamadı: {selectedObject.name}");
+                    LogManager.LogInput($"ObjectPresenter bulunamadı: {selectedObject.name}");
+                }
+            }
+            else
+            {
+                Debug.Log("Seçili 3D obje yok.");
+                LogManager.LogInput("Seçili 3D obje yok.");
+            }
+            
+            // 3. Eğer hiçbir şey silinmediyse fallback olarak event'i tetikle
+            if (!hasDeletedSomething)
+            {
+                Debug.Log("Hiçbir şey silinmedi, e_OnDelete.Invoke() çağrılıyor...");
+                LogManager.LogInput("Hiçbir şey silinmedi, e_OnDelete.Invoke() çağrılıyor...");
+                e_OnDelete.Invoke();
+                Debug.Log("e_OnDelete.Invoke() tamamlandı.");
+                LogManager.LogInput("e_OnDelete.Invoke() tamamlandı.");
+            }
         }
 
         /// <summary>
@@ -447,7 +519,7 @@ namespace Managers
         /// </summary>
         private void VisualizeRay()
         {
-            if (xrRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
+            if (TryGetPrecisionRaycastHit(out RaycastHit hit))
             {
                 Vector3 origin = xrRayInteractor.rayOriginTransform.position;
                 Vector3 direction = hit.point - origin;
@@ -473,6 +545,18 @@ namespace Managers
             InputDevice rightHandDevice = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
             bool isPressed = false;
             if (rightHandDevice.TryGetFeatureValue(CommonUsages.primaryButton, out isPressed))
+            {
+                return isPressed;
+            }
+            return false;
+        }
+
+        public bool IsGripPressed()
+        {
+            // Sağ el kontrol cihazındaki grip button kullanılıyor.
+            InputDevice rightHandDevice = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+            bool isPressed = false;
+            if (rightHandDevice.TryGetFeatureValue(CommonUsages.gripButton, out isPressed))
             {
                 return isPressed;
             }

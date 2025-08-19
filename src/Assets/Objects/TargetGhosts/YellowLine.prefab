@@ -103,7 +103,7 @@ GameObject:
   - component: {fileID: 806856633405942606}
   - component: {fileID: 7579631002664143374}
   - component: {fileID: 5237551111512223507}
-  - component: {fileID: 18683284557829230}
+  - component: {fileID: -1945586369590143548}
   m_Layer: 0
   m_Name: YellowLine
   m_TagString: Untagged
@@ -423,7 +423,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &18683284557829230
+--- !u!114 &-1945586369590143548
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -432,7 +432,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 1312225139167484232}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 18

@@ -18,6 +18,12 @@ namespace Models.Nodes
         public float TargetPosZ { get; set; }
         public bool HasTargetPosition { get; set; }  // Target pozisyonunun set edilip edilmediği
         
+        // Target rotation bilgileri (Euler angles)
+        public float TargetRotX { get; set; }
+        public float TargetRotY { get; set; }
+        public float TargetRotZ { get; set; }
+        public bool HasTargetRotation { get; set; }  // Target rotasyonunun set edilip edilmediği
+        
         // XML serializasyon için boş constructor
         public GrabNode() { }
         

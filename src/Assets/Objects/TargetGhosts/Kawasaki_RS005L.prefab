@@ -929,7 +929,7 @@ GameObject:
   - component: {fileID: 7070791746331437748}
   - component: {fileID: 6099831356593911974}
   - component: {fileID: 134010266946521129}
-  - component: {fileID: 7720983603222928781}
+  - component: {fileID: 8284171541471542400}
   m_Layer: 0
   m_Name: Kawasaki_RS005L
   m_TagString: Untagged
@@ -1193,7 +1193,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 849dafdcc81e41c47a938a4534a2366a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectId: Kawasaki_RS005L-37cc8d7d-9f98-426b-b7f4-d31867bb377c
+  objectId: 
   authority: 0
 --- !u!114 &7070791746331437748
 MonoBehaviour:
@@ -1250,7 +1250,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &7720983603222928781
+--- !u!114 &8284171541471542400
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1259,10 +1259,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6624975721320176085}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 15
 --- !u!1 &6660417519298323194
 GameObject:
   m_ObjectHideFlags: 0

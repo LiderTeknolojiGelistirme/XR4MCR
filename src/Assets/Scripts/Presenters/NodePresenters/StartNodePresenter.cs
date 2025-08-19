@@ -24,8 +24,8 @@ namespace Presenters.NodePresenters
 
         public override void Play()
         {
-            LogManager.LogScenario("Start node executed");
-            Debug.Log("This is start");
+            //LogManager.LogScenario("Start node executed");
+            //Debug.Log("This is start");
             CompleteNode();
         }
     }

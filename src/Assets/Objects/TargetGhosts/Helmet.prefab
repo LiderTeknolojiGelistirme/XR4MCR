@@ -232,7 +232,7 @@ GameObject:
   - component: {fileID: 6603483186822705709}
   - component: {fileID: 3229407851601322873}
   - component: {fileID: 3282556603543017613}
-  - component: {fileID: 2577014663541805484}
+  - component: {fileID: 1518224732185814134}
   m_Layer: 0
   m_Name: Helmet
   m_TagString: Untagged
@@ -553,7 +553,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &2577014663541805484
+--- !u!114 &1518224732185814134
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -562,7 +562,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7174385691779994287}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 13

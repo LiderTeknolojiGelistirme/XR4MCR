@@ -84,18 +84,38 @@ namespace Helpers
                 // Raycast test
                 if (interactor.gameObject.activeInHierarchy && interactor.enabled)
                 {
+                    // OLD METHOD TEST
                     bool hasHit = interactor.TryGetCurrent3DRaycastHit(out RaycastHit hit);
-                    LogManager.Log($"TEST: [{i}] Raycast Hit: {hasHit}");
+                    LogManager.Log($"TEST: [{i}] OLD Raycast Hit: {hasHit}");
                     if (hasHit)
                     {
-                        LogManager.Log($"TEST: [{i}] Hit Object: {hit.transform.name}, Point: {hit.point}");
-                        
-                        // Screen position test
-                        if (Camera.main != null)
+                        LogManager.Log($"TEST: [{i}] OLD Hit Object: {hit.transform.name}, Point: {hit.point}");
+                    }
+                    
+                    // NEW PRECISION METHOD TEST (via XRInputManager)
+                    var inputMgr = FindObjectOfType<XRInputManager>();
+                    if (inputMgr != null)
+                    {
+                        bool hasPrecisionHit = inputMgr.TryGetPrecisionRaycastHit(out RaycastHit precisionHit);
+                        LogManager.Log($"TEST: [{i}] NEW Precision Hit: {hasPrecisionHit}");
+                        if (hasPrecisionHit)
                         {
-                            Vector3 screenPos = Camera.main.WorldToScreenPoint(hit.point);
-                            LogManager.Log($"TEST: [{i}] Screen Position: {screenPos}");
+                            LogManager.Log($"TEST: [{i}] NEW Hit Object: {precisionHit.transform.name}, Point: {precisionHit.point}");
+                            
+                            // Compare results
+                            if (hasHit && hasPrecisionHit)
+                            {
+                                float distance = Vector3.Distance(hit.point, precisionHit.point);
+                                LogManager.Log($"TEST: [{i}] Distance between OLD/NEW: {distance}");
+                            }
                         }
+                    }
+                    
+                    // Screen position test (use OLD method for compatibility)
+                    if (hasHit && Camera.main != null)
+                    {
+                        Vector3 screenPos = Camera.main.WorldToScreenPoint(hit.point);
+                        LogManager.Log($"TEST: [{i}] Screen Position: {screenPos}");
                     }
                 }
             }

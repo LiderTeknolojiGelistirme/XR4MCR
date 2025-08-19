@@ -4,161 +4,33 @@ using Presenters;
 using Managers;
 using Models;
 using System.Collections.Generic;
-using Virtualware.Networking.Client;
-using Interfaces;
-using System.Threading.Tasks;
-using System;
 
-public class ConnectionPresenterFactory : MonoBehaviour
+public class ConnectionPresenterFactory : PlaceholderFactory<ConnectionPresenter>
 {
-    [Inject] private DiContainer _container;
-    [Inject] private GraphManager _graphManager;
-    
-    // VIROO Network Service'i
-    private INetworkObjectsService _networkObjectsService;
+    private readonly DiContainer _container;
+    private readonly GraphManager _graphManager;
     private ConnectionPresenter _previewConnection;
-    
-    // Connection prefab ID
-    private const string CONNECTION_PREFAB_ID = "connection_prefab";
+    private NodeConfig _nodeConfig;
 
-    private void Awake()
+    public ConnectionPresenterFactory(DiContainer container, GraphManager graphManager, NodeConfig nodeConfig)
     {
-        // VIROO injection sistemini başlat
-        this.QueueForInject();
-    }
-    
-    // VIROO injection method
-    protected void Inject(INetworkObjectsService networkObjectsService)
-    {
-        _networkObjectsService = networkObjectsService;
+        _container = container;
+        _graphManager = graphManager;
+        _nodeConfig = nodeConfig;
     }
 
-    public ConnectionPresenter Create()
+    public override ConnectionPresenter Create()
     {
-        // Senkron versiyon için async Create metodunu çağır
-        var task = CreateAsync();
-        task.Wait(); // Blocking call - mevcut interface'i korumak için
-        return task.Result;
-    }
-
-    private async Task<ConnectionPresenter> CreateAsync()
-    {
-        try
-        {
-            if (_networkObjectsService == null)
-            {
-                Debug.LogError("[ConnectionPresenterFactory] NetworkObjectsService inject edilmemiş!");
-                return null;
-            }
-
-            Debug.Log($"[ConnectionPresenterFactory] VIROO connection nesnesi oluşturuluyor...");
-            
-            // Canvas container'ı bularak o container'dan oluştur
-            var canvasContainer = _graphManager.contentTransform.GetComponent<PrefabInstantiableContainer>();
-            if (canvasContainer == null)
-            {
-                Debug.LogError("[ConnectionPresenterFactory] Canvas Content'inde PrefabInstantiableContainer bulunamadı!");
-                return null;
-            }
-            
-            // VIROO ile Canvas'da oluştur
-            var createResponse = await _networkObjectsService.CreateDynamicObject(
-                CONNECTION_PREFAB_ID,
-                Vector3.zero,
-                Quaternion.identity,
-                requestAuthority: true,
-                isPersistent: true,
-                UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
-            );
-
-            if (createResponse.Success)
-            {
-                Debug.Log($"[ConnectionPresenterFactory] Connection nesnesi başarıyla oluşturuldu!");
-                
-                GameObject connectionGO = createResponse.InstantiatedObject.GameObject;
-                
-                // Canvas'da oluştu, transform'u düzelt
-                ConfigureCanvasConnection(connectionGO);
-                
-                // Canvas ZenjectInjector ile inject et
-                var connectionPresenter = TryInjectCanvasConnection(connectionGO);
-                
-                return connectionPresenter;
-            }
-            else
-            {
-                Debug.LogError($"[ConnectionPresenterFactory] Connection nesnesi oluşturulamadı!");
-                return null;
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[ConnectionPresenterFactory] Connection oluşturulurken hata: {e.Message}");
-            return null;
-        }
-    }
-    
-    private void ConfigureCanvasConnection(GameObject connectionGO)
-    {
-        try
-        {
-            // Canvas altına ekle - "false" parametresi ile yerel pozisyonların korunmasını sağlıyoruz
-            connectionGO.transform.SetParent(_graphManager.Canvas.transform, false);
-            
-            // RectTransform pozisyonunu ayarla
-            RectTransform rectTransform = connectionGO.GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                rectTransform.anchoredPosition = Vector2.zero;
-                rectTransform.localScale = Vector3.one;
-                
-                // Z pozisyonunu 0'a eşitle (Canvas layer'ında olması için)
-                Vector3 localPos = rectTransform.localPosition;
-                rectTransform.localPosition = new Vector3(localPos.x, localPos.y, 0);
-            }
-            
-            Debug.Log($"[ConnectionPresenterFactory] Connection konfigüre edildi");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[ConnectionPresenterFactory] Connection konfigüre edilirken hata: {e.Message}");
-        }
-    }
-    
-    private ConnectionPresenter TryInjectCanvasConnection(GameObject connectionGO)
-    {
-        try
-        {
-            // 1. Canvas Content'deki ZenjectInjector'ı kullan
-            var canvasInjector = _graphManager.contentTransform.GetComponent<ZenjectInjector>();
-            if (canvasInjector != null)
-            {
-                canvasInjector.InjectObject(connectionGO);
-                Debug.Log($"[ConnectionPresenterFactory] {connectionGO.name} nesnesine Canvas ZenjectInjector ile injection uygulandı");
-            }
-            else
-            {
-                Debug.LogWarning("[ConnectionPresenterFactory] Canvas Content'inde ZenjectInjector bulunamadı!");
-            }
-
-            // 2. ConnectionPresenter bileşenini al veya ekle
-            var connectionPresenter = connectionGO.GetComponent<ConnectionPresenter>();
-            if (connectionPresenter == null)
-            {
-                // ConnectionPresenter bileşenini instantiate edip injection uyguluyoruz
-                connectionPresenter = _container.InstantiateComponent<ConnectionPresenter>(connectionGO);
-            }
-            
-            _container.Inject(connectionPresenter);
-            
-            Debug.Log($"[ConnectionPresenterFactory] {connectionGO.name} başarıyla inject edildi");
-            return connectionPresenter;
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[ConnectionPresenterFactory] Connection injection hatası: {e.Message}");
-            return null;
-        }
+        // Yeni GameObject oluşturup, canvas altına ekliyoruz.
+       // var connectionGO = new GameObject("Connection");
+        var connectionGO =_container.InstantiatePrefab(_nodeConfig.connectionPrefab, _graphManager.Canvas.transform);
+        // "false" parametresi ile yerel pozisyonların korunmasını sağlıyoruz.
+        connectionGO.transform.SetParent(_graphManager.Canvas.transform, false);
+        
+        // ConnectionPresenter bileşenini instantiate edip injection uyguluyoruz.
+        var connectionPresenter = connectionGO.gameObject.GetComponent<ConnectionPresenter>();
+        
+        return connectionPresenter;
     }
 
     /// <summary>
@@ -247,7 +119,7 @@ public class ConnectionPresenterFactory : MonoBehaviour
     public ConnectionPresenter CreatePreviewConnection(PortPresenter startPort)
     {
         if (_previewConnection != null)
-            UnityEngine.Object.Destroy(_previewConnection.gameObject);
+            Object.Destroy(_previewConnection.gameObject);
 
         _previewConnection = Create();
         

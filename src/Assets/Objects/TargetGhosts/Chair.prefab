@@ -108,7 +108,7 @@ GameObject:
   - component: {fileID: 6681303701057405686}
   - component: {fileID: 2487774962157382833}
   - component: {fileID: 977892543045221672}
-  - component: {fileID: -5869698600618300552}
+  - component: {fileID: -4153622587335004806}
   m_Layer: 0
   m_Name: Chair
   m_TagString: Untagged
@@ -428,7 +428,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &-5869698600618300552
+--- !u!114 &-4153622587335004806
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -437,7 +437,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 8528464032108812184}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 9

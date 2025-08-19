@@ -9,6 +9,7 @@ namespace Managers
     {
         public abstract Vector3 ScreenPointerPosition { get; }
         public abstract Vector3 GetCanvasPointerPosition(GraphManager graphManager);
+        public abstract bool TryGetPrecisionRaycastHit(out RaycastHit hit);
         public abstract bool PointerPress { get; }
         public abstract bool Aux0KeyPress { get; }
         public abstract void OnUpdate();

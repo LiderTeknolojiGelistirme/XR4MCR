@@ -22,7 +22,7 @@ GameObject:
   - component: {fileID: -5513968316148651839}
   - component: {fileID: -8416473740605037139}
   - component: {fileID: 1795504811892367266}
-  - component: {fileID: -2124525378318694187}
+  - component: {fileID: -2545752812048083080}
   m_Layer: 0
   m_Name: SM_Nipers_01
   m_TagString: Untagged
@@ -397,7 +397,7 @@ MonoBehaviour:
   allowDirectInteraction: 1
   allowRayInteraction: 1
   allowDistanceSelectInteraction: 1
---- !u!114 &-2124525378318694187
+--- !u!114 &-2545752812048083080
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -406,7 +406,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7074477337311069410}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 21

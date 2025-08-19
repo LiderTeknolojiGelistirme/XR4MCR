@@ -24,6 +24,29 @@ namespace Managers
         public override bool PointerPress => Input.GetKey(clickKey);
         public override bool Aux0KeyPress => Input.GetKey(aux0Key);
 
+        // LEGACY INPUT SYSTEM - Mouse pozisyonundan camera ray
+        public override bool TryGetPrecisionRaycastHit(out RaycastHit hit)
+        {
+            hit = default(RaycastHit);
+            
+            if (Camera.main == null)
+                return false;
+                
+            // Mouse pozisyonundan camera ray oluştur
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            
+            // Max distance
+            float maxDistance = 1000f;
+            
+            // LayerMask - UI ve RayInteraction layer'larını dahil et
+            LayerMask layerMask = (1 << LayerMask.NameToLayer("UI")) | (1 << LayerMask.NameToLayer("RayInteraction")) | (1 << LayerMask.NameToLayer("Default"));
+            
+            // PRECISION PHYSICS RAYCAST - Mouse ray
+            bool hasHit = Physics.Raycast(ray, out hit, maxDistance, layerMask, QueryTriggerInteraction.Collide);
+            
+            return hasHit;
+        }
+
         Vector3 _initialMousePos;
         [Inject]
         public void Construct(SystemManager systemManager, GraphManager graphManager)

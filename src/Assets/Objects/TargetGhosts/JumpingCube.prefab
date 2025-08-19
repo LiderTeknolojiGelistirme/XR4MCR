@@ -25,7 +25,7 @@ GameObject:
   - component: {fileID: 6466103513987669731}
   - component: {fileID: 6910105504342632385}
   - component: {fileID: 5726240364041807312}
-  - component: {fileID: -842639134582114775}
+  - component: {fileID: -3780350171792677032}
   m_Layer: 0
   m_Name: JumpingCube
   m_TagString: Untagged
@@ -516,7 +516,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &-842639134582114775
+--- !u!114 &-3780350171792677032
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -525,7 +525,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 4158579787133069721}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 0

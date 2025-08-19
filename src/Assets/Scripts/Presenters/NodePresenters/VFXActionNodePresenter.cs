@@ -37,8 +37,40 @@ namespace Presenters.NodePresenters
         {
             LoadVFXPrefabs();
             
-            // Sadece UI listener'ları setup et, dropdown setup'ını SyncModelToUI'a bırak
+            // VFX'ler yüklendikten sonra dropdown'u populate et
+            PopulateEffectDropdown();
+            
+            // UI listener'ları setup et
             SetupUIListeners();
+        }
+        
+        /// <summary>
+        /// Effect dropdown'unu VFX prefabs ile populate eder
+        /// </summary>
+        private void PopulateEffectDropdown()
+        {
+            if (effectDropdown != null && _vfxPrefabs.Count > 0)
+            {
+                effectDropdown.ClearOptions();
+                List<string> options = new List<string>();
+                
+                foreach (var prefab in _vfxPrefabs)
+                {
+                    options.Add(prefab.name);
+                }
+                
+                effectDropdown.AddOptions(options);
+                
+                // Listener'ı ekle
+                effectDropdown.onValueChanged.RemoveAllListeners();
+                effectDropdown.onValueChanged.AddListener(OnEffectSelected);
+                
+                LogManager.LogSuccess($"VFXNode: Dropdown populated with {options.Count} VFX options in Start()");
+            }
+            else
+            {
+                LogManager.LogWarning("VFXNode: Cannot populate dropdown - effectDropdown is null or no VFX prefabs loaded");
+            }
         }
         
         private void SetupUIListeners()
@@ -75,6 +107,7 @@ namespace Presenters.NodePresenters
         
         private void Update()
         {
+            base.Update();
             if (_holdingTarget && _targetSphere != null)
             {
                 if (XRInputManager.GetRawTriggerState())
@@ -249,10 +282,33 @@ namespace Presenters.NodePresenters
         
                 _instantiatedVFX = Instantiate(_vfxPrefabs[selectedIndex], position, Quaternion.identity);
                 
+                // VFX render ayarlarını UI'nin önüne geçecek şekilde düzelt
+                FixVFXRenderOrder(_instantiatedVFX);
+                
                 if (toggleDuration != null && toggleDuration.isOn)
                 {
                     Destroy(_instantiatedVFX, _duration);
                 }
+            }
+        }
+
+        /// <summary>
+        /// VFX particle system'lerinin render order'ını UI'nin önüne geçecek şekilde ayarlar
+        /// </summary>
+        private void FixVFXRenderOrder(GameObject vfxObject)
+        {
+            if (vfxObject == null) return;
+            
+            // Tüm particle system renderer'ları bul (child object'lerde de olabilir)
+            ParticleSystemRenderer[] renderers = vfxObject.GetComponentsInChildren<ParticleSystemRenderer>();
+            
+            foreach (var renderer in renderers)
+            {
+                // Sorting Layer'ı "Default" olarak bırak ama Order in Layer'ı artır
+                renderer.sortingLayerName = "Default";
+                renderer.sortingOrder = 100; // UI'nin üstünde görünmesi için yüksek değer
+                
+                LogManager.LogSuccess($"VFX renderer order fixed: {renderer.gameObject.name} - Order: {renderer.sortingOrder}");
             }
         }
 
@@ -289,6 +345,9 @@ namespace Presenters.NodePresenters
                 }
         
                 _instantiatedVFX = Instantiate(_vfxPrefabs[selectedIndex], position, Quaternion.identity);
+                
+                // VFX render ayarlarını UI'nin önüne geçecek şekilde düzelt
+                FixVFXRenderOrder(_instantiatedVFX);
                 
                 bool useDuration = toggleDuration != null ? toggleDuration.isOn : VFXModel?.UseDuration ?? false;
                 
@@ -336,6 +395,56 @@ namespace Presenters.NodePresenters
             }
         }
 
+        #region Edit Mode Override
+
+        /// <summary>
+        /// Edit modu açıldığında (senaryo oynatma) target sphere'i gizler
+        /// </summary>
+        public override void EditModeOn()
+        {
+            base.EditModeOn();
+            ShowTarget();
+        }
+
+        /// <summary>
+        /// Edit modu kapandığında (configuration) target sphere'i gösterir
+        /// </summary>
+        public override void EditModeOff()
+        {
+            base.EditModeOff();
+            HideTarget();
+        }
+
+        #endregion
+
+        #region Target Management
+
+        /// <summary>
+        /// Target sphere'i gösterir (configuration modu için)
+        /// </summary>
+        private void ShowTarget()
+        {
+            if (_targetSphere != null)
+            {
+                _targetSphere.SetActive(true);
+                LogManager.LogSuccess($"VFX target sphere shown: {_targetSphere.name}");
+            }
+        }
+
+        /// <summary>
+        /// Target sphere'i gizler (senaryo oynatma sırasında)
+        /// </summary>
+        private void HideTarget()
+        {
+            if (_targetSphere != null)
+            {
+                _targetSphere.SetActive(false);
+                LogManager.LogSuccess($"VFX target sphere hidden: {_targetSphere.name}");
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Model'deki değerleri UI'ya aktarır (yükleme sonrası)
         /// </summary>
@@ -344,7 +453,11 @@ namespace Presenters.NodePresenters
             // Önce base sınıfın ortak özelliklerini sync et
             base.SyncModelToUI();
             
-            if (VFXModel == null) return;
+            if (VFXModel == null) 
+            {
+                LogManager.LogError("VFXNode: VFXModel is NULL, cannot sync to UI");
+                return;
+            }
 
             // VFX prefabs'ı yükle (eğer boşsa)
             if (_vfxPrefabs.Count == 0)
@@ -353,73 +466,74 @@ namespace Presenters.NodePresenters
             }
 
             // Dropdown'u her durumda setup et
-            if (effectDropdown != null)
+            if (effectDropdown == null)
             {
-                effectDropdown.ClearOptions();
-                List<string> options = new List<string>();
-                
-                foreach (var prefab in _vfxPrefabs)
-                {
-                    options.Add(prefab.name);
-                }
-                
-                effectDropdown.AddOptions(options);
-                
-                // Listener'ı ekle (eğer daha önce eklenmemişse)
-                effectDropdown.onValueChanged.RemoveAllListeners();
-                effectDropdown.onValueChanged.AddListener(OnEffectSelected);
-                
-                LogManager.LogSuccess($"VFXNode: Dropdown setup completed with {options.Count} items");
+                LogManager.LogError("VFXNode: effectDropdown is NULL!");
+                return;
             }
 
-            // Seçili VFX index'ini restore et - En kritik kısım!
-            if (effectDropdown != null && VFXModel.SelectedVFXIndex >= 0 && 
-                VFXModel.SelectedVFXIndex < effectDropdown.options.Count)
+            effectDropdown.ClearOptions();
+            List<string> options = new List<string>();
+            
+            foreach (var prefab in _vfxPrefabs)
             {
-                // Dropdown listener'ını geçici olarak kaldır (OnEffectSelected tetiklenmesini engelle)
-                effectDropdown.onValueChanged.RemoveListener(OnEffectSelected);
-                
-                // Dropdown value'yu set et
-                effectDropdown.value = VFXModel.SelectedVFXIndex;
-                
-                // Manual olarak dropdown refresh
-                effectDropdown.RefreshShownValue();
-                
-                // Listener'ı geri ekle
-                effectDropdown.onValueChanged.AddListener(OnEffectSelected);
-                
-                LogManager.LogSuccess($"VFXNode: Selected effect index restored: {VFXModel.SelectedVFXIndex} ({VFXModel.SelectedEffect})");
+                options.Add(prefab.name);
             }
-            else if (effectDropdown != null && !string.IsNullOrEmpty(VFXModel.SelectedEffect))
+            
+            effectDropdown.AddOptions(options);
+            
+            // Listener'ı ekle (eğer daha önce eklenmemişse)
+            effectDropdown.onValueChanged.RemoveAllListeners();
+            effectDropdown.onValueChanged.AddListener(OnEffectSelected);
+
+            // Seçili VFX'i restore et - ÖNCE NAME-BASED SEARCH YAP
+            bool selectionRestored = false;
+            
+            if (!string.IsNullOrEmpty(VFXModel.SelectedEffect))
             {
-                // Index çalışmıyorsa, effect name ile arama yap
-                LogManager.LogWarning($"VFXNode: Index mismatch, searching by name: {VFXModel.SelectedEffect}");
-                
+                // Listener'ı geçici olarak kaldır
                 effectDropdown.onValueChanged.RemoveListener(OnEffectSelected);
                 
                 for (int i = 0; i < effectDropdown.options.Count; i++)
                 {
                     if (effectDropdown.options[i].text == VFXModel.SelectedEffect)
                     {
-                        effectDropdown.value = i;
-                        effectDropdown.RefreshShownValue();
-                        VFXModel.SelectedVFXIndex = i; // Index'i düzelt
-                        LogManager.LogSuccess($"VFXNode: Found effect by name at index {i}: {VFXModel.SelectedEffect}");
+                        // Coroutine ile UI refresh'ini geciktir
+                        StartCoroutine(RefreshDropdownSelection(i, VFXModel.SelectedEffect));
+                        VFXModel.SelectedVFXIndex = i; // Index'i güncelle
+                        selectionRestored = true;
                         break;
                     }
                 }
                 
-                effectDropdown.onValueChanged.AddListener(OnEffectSelected);
-            }
-            else if (effectDropdown != null && _vfxPrefabs.Count > 0)
-            {
-                // Hiçbir seçili effect yoksa, ilk option'ı seç (sadece UI'da, model'e yazmadan)
-                effectDropdown.onValueChanged.RemoveListener(OnEffectSelected);
-                effectDropdown.value = 0;
-                effectDropdown.RefreshShownValue();
+                // Listener'ı geri ekle
                 effectDropdown.onValueChanged.AddListener(OnEffectSelected);
                 
-                LogManager.LogSuccess("VFXNode: Default first option selected for UI");
+                if (!selectionRestored)
+                {
+                    LogManager.LogError($"VFXNode: Effect NOT FOUND by name: '{VFXModel.SelectedEffect}'");
+                }
+            }
+            
+            // Eğer name-based search başarısız olduysa index-based dene
+            if (!selectionRestored && VFXModel.SelectedVFXIndex >= 0 && VFXModel.SelectedVFXIndex < effectDropdown.options.Count)
+            {
+                effectDropdown.onValueChanged.RemoveListener(OnEffectSelected);
+                
+                // Coroutine ile UI refresh'ini geciktir
+                StartCoroutine(RefreshDropdownSelection(VFXModel.SelectedVFXIndex, effectDropdown.options[VFXModel.SelectedVFXIndex].text));
+                
+                effectDropdown.onValueChanged.AddListener(OnEffectSelected);
+                
+                selectionRestored = true;
+            }
+            
+            // Hiçbir seçim yapılamazsa default olarak ilk seçeneği seç (sadece UI'da)
+            if (!selectionRestored && effectDropdown.options.Count > 0)
+            {
+                effectDropdown.onValueChanged.RemoveListener(OnEffectSelected);
+                StartCoroutine(RefreshDropdownSelection(0, effectDropdown.options[0].text));
+                effectDropdown.onValueChanged.AddListener(OnEffectSelected);
             }
             
             // Duration'ı UI'ya aktar
@@ -468,11 +582,16 @@ namespace Presenters.NodePresenters
                 var parent = GameObject.Find("Root").transform;
                 _targetSphere.transform.SetParent(parent);
                 _targetSphere.transform.position = VFXModel.TargetPosition;
-                
-                LogManager.LogSuccess($"VFXNode: Target position restored: {VFXModel.TargetPosition}");
             }
 
-            LogManager.LogSuccess($"VFXNode UI synced - Effect: {VFXModel.SelectedEffect}, Index: {VFXModel.SelectedVFXIndex}, Duration: {VFXModel.Duration}, UseDuration: {VFXModel.UseDuration}");
+            LogManager.LogSuccess($"VFXNode UI synced successfully - Effect: '{VFXModel.SelectedEffect}' restored");
+        }
+
+        private IEnumerator RefreshDropdownSelection(int index, string text)
+        {
+            yield return null; // UI'nın bir frame sonra güncellenmesini bekler
+            effectDropdown.value = index;
+            effectDropdown.RefreshShownValue();
         }
     }
 }

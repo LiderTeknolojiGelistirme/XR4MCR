@@ -103,7 +103,7 @@ GameObject:
   - component: {fileID: 487781120117813410}
   - component: {fileID: 5568307094906824294}
   - component: {fileID: 7721332624906641440}
-  - component: {fileID: -6517705918247247267}
+  - component: {fileID: -3557463486813803113}
   m_Layer: 0
   m_Name: Chasis
   m_TagString: Untagged
@@ -423,7 +423,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &-6517705918247247267
+--- !u!114 &-3557463486813803113
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -432,7 +432,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 8830449595805338983}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 10

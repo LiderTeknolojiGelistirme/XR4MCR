@@ -54,12 +54,10 @@
       "hash": "59208443d6ca54b140b28d3ca7308eda0f6c31b9"
     },
     "com.meta.xr.simulator": {
-      "version": "74.0.0",
+      "version": "77.0.0",
       "depth": 0,
       "source": "registry",
-      "dependencies": {
-        "com.unity.editorcoroutines": "1.0.0"
-      },
+      "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.nmerso": {
@@ -143,13 +141,6 @@
     "com.unity.collab-proxy": {
       "version": "2.4.4",
       "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.editorcoroutines": {
-      "version": "1.0.0",
-      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

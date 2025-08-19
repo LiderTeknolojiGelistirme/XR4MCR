@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: -3421446128266605045}
   - component: {fileID: -6639837575043903954}
   - component: {fileID: -974538059862885499}
-  - component: {fileID: 5733887471028163459}
+  - component: {fileID: 7877189061983220810}
   m_Layer: 0
   m_Name: SM_Wrench_02
   m_TagString: Untagged
@@ -374,7 +374,7 @@ MonoBehaviour:
   allowDirectInteraction: 1
   allowRayInteraction: 1
   allowDistanceSelectInteraction: 1
---- !u!114 &5733887471028163459
+--- !u!114 &7877189061983220810
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -383,7 +383,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 5987789508209423365}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 24

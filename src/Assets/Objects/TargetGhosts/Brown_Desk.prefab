@@ -476,7 +476,7 @@ GameObject:
   - component: {fileID: 7286281625582977659}
   - component: {fileID: 185867710657877561}
   - component: {fileID: 1278178819008146482}
-  - component: {fileID: 8226781797475286696}
+  - component: {fileID: -1596969341260451817}
   m_Layer: 0
   m_Name: Brown_Desk
   m_TagString: Untagged
@@ -808,7 +808,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2febf4ca94876c14e9f11be1409b87f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &8226781797475286696
+--- !u!114 &-1596969341260451817
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -817,10 +817,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4707337995912873028}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 7
 --- !u!1 &6345766176176353128
 GameObject:
   m_ObjectHideFlags: 0

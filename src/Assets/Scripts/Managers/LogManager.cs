@@ -13,11 +13,15 @@ namespace Managers
     {
         [SerializeField] private TextMeshProUGUI _outputText;
         [SerializeField] private ScrollRect _scrollRect;
-        [SerializeField] private int _maxLogCount = 100;
+        [SerializeField] private int _maxLogCount = 500; // 100'den 500'e çıkarıldı - daha çok log tutabilmek için
         [SerializeField] private bool _autoScroll = true;
 
         private List<string> _logMessages = new List<string>();
         private bool _needsScroll = false;
+        
+        // Auto scroll kontrolü için
+        private bool _userHasScrolledUp = false;
+        private float _scrollThreshold = 0.05f; // %5 tolerans - kullanıcı en alttan biraz uzaklaşınca auto scroll dursun
         
         // Txt dosyasına yazma kontrol
         public static bool enableFileLogging = false; // Default olarak kapalı
@@ -38,8 +42,60 @@ namespace Managers
             _instance = this;
             Debug.Log("LogManager initialized");
             
+            // ScrollRect setup'ı kontrol et ve düzelt
+            SetupScrollRect();
+            
+            // ScrollRect listener ekle
+            if (_scrollRect != null)
+            {
+                _scrollRect.onValueChanged.AddListener(OnScrollValueChanged);
+            }
+            
             // Dosya sistemi hazırla ama yazmaya başlama
             InitializeFileSystem();
+        }
+
+        /// <summary>
+        /// ScrollRect'in doğru kurulumunu kontrol eder ve gerekiyorsa düzeltir
+        /// </summary>
+        private void SetupScrollRect()
+        {
+            if (_scrollRect == null)
+            {
+                Debug.LogError("[LogManager] ScrollRect atanmamış!");
+                return;
+            }
+
+            if (_outputText == null)
+            {
+                Debug.LogError("[LogManager] OutputText atanmamış!");
+                return;
+            }
+
+            // Content objesini bul (genelde _outputText'in parent'ı olmalı)
+            Transform contentTransform = _outputText.transform.parent;
+            if (contentTransform == null)
+            {
+                Debug.LogError("[LogManager] OutputText'in parent'ı (Content) bulunamadı!");
+                return;
+            }
+
+            // ContentSizeFitter kontrol et
+            ContentSizeFitter sizeFitter = contentTransform.GetComponent<ContentSizeFitter>();
+            if (sizeFitter == null)
+            {
+                sizeFitter = contentTransform.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            // Vertical boyutu text'e göre ayarla
+            sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            // ScrollRect'i content ile bağla (genelde otomatik olmalı)
+            if (_scrollRect.content == null)
+            {
+                _scrollRect.content = contentTransform.GetComponent<RectTransform>();
+            }
         }
         
         private void InitializeFileSystem()
@@ -340,11 +396,19 @@ namespace Managers
         {
             if (_outputText == null) return;
 
-            int visibleCount = Mathf.Min(28, _logMessages.Count);
-            var visibleLogs = _logMessages.GetRange(_logMessages.Count - visibleCount, visibleCount);
-            _outputText.text = string.Join("\n", visibleLogs);
+            // ❌ ESKİ KOD: Sadece 28 log gösteriyordu
+            // int visibleCount = Mathf.Min(28, _logMessages.Count);
+            // var visibleLogs = _logMessages.GetRange(_logMessages.Count - visibleCount, visibleCount);
+            
+            // ✅ YENİ KOD: Tüm logları göster
+            // Tüm logları göster - ScrollRect bu şekilde düzgün çalışır
+            _outputText.text = string.Join("\n", _logMessages);
 
-            if (_autoScroll && _scrollRect != null)
+            // ContentSizeFitter ile text boyutu otomatik ayarlanır
+            // Bu sayede ScrollRect düzgün scroll yapabilir
+
+            // Auto scroll sadece kullanıcı yukarı scroll yapmamışsa çalışsın
+            if (_autoScroll && _scrollRect != null && !_userHasScrolledUp)
             {
                 StartCoroutine(AutoScrollToBottom());
             }
@@ -367,6 +431,58 @@ namespace Managers
             }
         }
 
+        /// <summary>
+        /// Kullanıcının manuel olarak en son loglara dönmesini sağlar
+        /// </summary>
+        public void ScrollToBottom()
+        {
+            if (_scrollRect != null)
+            {
+                _userHasScrolledUp = false; // Auto scroll'u yeniden aktifleştir
+                StartCoroutine(AutoScrollToBottom());
+            }
+        }
+
+        /// <summary>
+        /// Static erişim için ScrollToBottom
+        /// </summary>
+        public static void ForceScrollToBottom()
+        {
+            if (_instance != null)
+            {
+                _instance.ScrollToBottom();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Scroll listener'ını temizle
+            if (_scrollRect != null)
+            {
+                _scrollRect.onValueChanged.RemoveListener(OnScrollValueChanged);
+            }
+        }
+
+        // Kullanıcının manuel scroll yaptığını algılayan metod
+        private void OnScrollValueChanged(Vector2 value)
+        {
+            // ScrollRect'te: 0f = en alt (yeni loglar), 1f = en üst (eski loglar)
+            // Kullanıcı en alttan (0f) biraz uzaklaşmışsa auto scroll'u durdur
+            if (value.y > _scrollThreshold)
+            {
+                if (!_userHasScrolledUp)
+                {
+                    _userHasScrolledUp = true;
+                }
+            }
+            else
+            {
+                if (_userHasScrolledUp)
+                {
+                    _userHasScrolledUp = false;
+                }
+            }
+        }
 
 
         // Clear all logs

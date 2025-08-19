@@ -266,7 +266,7 @@ GameObject:
   - component: {fileID: 1543412067745504698}
   - component: {fileID: 1818448688592247714}
   - component: {fileID: 7661943414500421920}
-  - component: {fileID: -553841113463284063}
+  - component: {fileID: -5978825771862024650}
   m_Layer: 0
   m_Name: Gloves
   m_TagString: Untagged
@@ -587,7 +587,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &-553841113463284063
+--- !u!114 &-5978825771862024650
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -596,10 +596,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4985097380698417329}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 12
 --- !u!1 &5247372359591687749
 GameObject:
   m_ObjectHideFlags: 0

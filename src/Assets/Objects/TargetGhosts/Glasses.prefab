@@ -22,7 +22,7 @@ GameObject:
   - component: {fileID: 2256405873397042315}
   - component: {fileID: 4327574981470322650}
   - component: {fileID: 5602473140315829428}
-  - component: {fileID: 7060263514257792727}
+  - component: {fileID: -1196981507005288320}
   m_Layer: 0
   m_Name: Glasses
   m_TagString: Untagged
@@ -294,7 +294,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 849dafdcc81e41c47a938a4534a2366a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectId: Glasses-9fd0eeb5-f189-4c0f-b8af-a83665423b45
+  objectId: 
   authority: 0
 --- !u!23 &7379613740038715702
 MeshRenderer:
@@ -393,7 +393,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &7060263514257792727
+--- !u!114 &-1196981507005288320
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -402,7 +402,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 4061122070925969897}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 11

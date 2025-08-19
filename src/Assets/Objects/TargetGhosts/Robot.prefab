@@ -2024,7 +2024,7 @@ GameObject:
   - component: {fileID: 5550169741140086315}
   - component: {fileID: 7595887786312085282}
   - component: {fileID: 6400447474168736001}
-  - component: {fileID: 2630092436435084564}
+  - component: {fileID: -8269769048858816884}
   m_Layer: 0
   m_Name: Robot
   m_TagString: Untagged
@@ -2344,7 +2344,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &2630092436435084564
+--- !u!114 &-8269769048858816884
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2353,10 +2353,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4238404795218241481}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 0
 --- !u!1 &4264066823298080227
 GameObject:
   m_ObjectHideFlags: 0

@@ -35,8 +35,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 38.80005, y: 119.8}
-  m_SizeDelta: {x: 30, y: 30}
+  m_AnchoredPosition: {x: 40, y: 145.3}
+  m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5108557568656534431
 CanvasRenderer:
@@ -155,8 +155,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 39.2, y: 80.5}
-  m_SizeDelta: {x: 30, y: 30}
+  m_AnchoredPosition: {x: 41, y: 74}
+  m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7465277231808458819
 CanvasRenderer:
@@ -328,7 +328,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 10, y: -10}
-  m_SizeDelta: {x: 20, y: 20}
+  m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3465200549625166294
 CanvasRenderer:
@@ -403,8 +403,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 38.80005, y: 159.5}
-  m_SizeDelta: {x: 30, y: 30}
+  m_AnchoredPosition: {x: 40, y: 222}
+  m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &819658868488561787
 CanvasRenderer:
@@ -710,8 +710,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -79.6, y: 80.10002}
-  m_SizeDelta: {x: 123.19, y: 30}
+  m_AnchoredPosition: {x: -90.80001, y: 73}
+  m_SizeDelta: {x: 123.19, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1240949863024557643
 CanvasRenderer:
@@ -1152,7 +1152,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: 20}
+  m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2825417187862616401
 CanvasRenderer:
@@ -1228,8 +1228,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -62.299927, y: 118.6}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: -73.49994, y: 144.1}
+  m_SizeDelta: {x: 160, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8140962779201289781
 CanvasRenderer:
@@ -1403,8 +1403,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -62.299927, y: 160.1}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: -74, y: 222.6}
+  m_SizeDelta: {x: 160, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1833888549400444183
 CanvasRenderer:
@@ -2094,8 +2094,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 6.1000977, y: 80.500015}
-  m_SizeDelta: {x: 30, y: 30}
+  m_AnchoredPosition: {x: -5.0999146, y: 74}
+  m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &896227758988922411
 CanvasRenderer:
@@ -2214,7 +2214,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -59.5, y: 43.6}
+  m_AnchoredPosition: {x: -48, y: 1}
   m_SizeDelta: {x: 160, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2690091792658122958
@@ -2299,7 +2299,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 9, y: 0.9}
+  m_AnchoredPosition: {x: 44, y: 0.9}
   m_SizeDelta: {x: -28, y: -3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1800330001395787642
@@ -2357,10 +2357,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
+  m_fontSize: 36
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -2420,12 +2420,17 @@ PrefabInstance:
     - target: {fileID: 2876613190113390765, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 160
+      value: 231
       objectReference: {fileID: 0}
     - target: {fileID: 3614731437033220929, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 160
+      value: 248
+      objectReference: {fileID: 0}
+    - target: {fileID: 4012665462842887341, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -183
       objectReference: {fileID: 0}
     - target: {fileID: 4748286192969522134, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
@@ -2470,7 +2475,7 @@ PrefabInstance:
     - target: {fileID: 4796423307017209187, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 480
+      value: 650
       objectReference: {fileID: 0}
     - target: {fileID: 4796423307017209187, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
@@ -2540,7 +2545,7 @@ PrefabInstance:
     - target: {fileID: 6781746159012251434, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -203
+      value: -274
       objectReference: {fileID: 0}
     - target: {fileID: 6918409585039522229, guid: 7398c762882dbaf4c8605d7693789579,
         type: 3}
@@ -2576,6 +2581,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 8115597250989665199, guid: 7398c762882dbaf4c8605d7693789579,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -225.29999
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

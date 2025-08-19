@@ -27,8 +27,9 @@ namespace Enums
         Pincers,
         Screwdriver,
         Wrench,
-
-        ControlBox
+        ComputerFan,
+        ControlBox,
+        ur10seperated
         
     }
 } 

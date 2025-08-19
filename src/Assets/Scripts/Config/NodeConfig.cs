@@ -94,6 +94,8 @@ public class NodeConfig : ScriptableObject
     public GameObject wrenchPrefab;
 
     public GameObject controlboxPrefab;
+    public GameObject computerFanPrefab;
+    public GameObject ur10seperatedPrefab;
     
 
     [Header("CanvasPrefabs")]

@@ -7,7 +7,7 @@ namespace Presenters.NodePresenters
     {
         public override void Play()
         {
-            Debug.Log("This is finish");
+            //Debug.Log("This is finish");
             CompleteNode();
         }
 

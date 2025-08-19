@@ -6,6 +6,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using Viroo.Interactions.Grab;
 using Managers;
 using Models.Nodes;
+using _3rd_Party.Outline;
 
 namespace Presenters.NodePresenters
 {
@@ -563,9 +564,80 @@ namespace Presenters.NodePresenters
             return null;
         }
 
+        /// <summary>
+        /// Seçili objenin outline'ını etkinleştirir
+        /// </summary>
+        private void EnableObjectOutline()
+        {
+            GameObject targetObject = GetTargetObject();
+            if (targetObject != null)
+            {
+                _3rd_Party.Outline.Outline outline = targetObject.GetComponent<_3rd_Party.Outline.Outline>();
+                if (outline != null)
+                {
+                    outline.enabled = true;
+                    LogManager.LogSuccess($"TouchNode: Outline enabled for {targetObject.name}");
+                }
+                else
+                {
+                    LogManager.LogWarning($"TouchNode: No outline component found on {targetObject.name}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Seçili objenin outline'ını devre dışı bırakır
+        /// </summary>
+        private void DisableObjectOutline()
+        {
+            GameObject targetObject = GetTargetObject();
+            if (targetObject != null)
+            {
+                _3rd_Party.Outline.Outline outline = targetObject.GetComponent<_3rd_Party.Outline.Outline>();
+                if (outline != null)
+                {
+                    outline.enabled = false;
+                    LogManager.LogSuccess($"TouchNode: Outline disabled for {targetObject.name}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Outline için hedef objeyi döndürür (parent veya child)
+        /// </summary>
+        private GameObject GetTargetObject()
+        {
+            if (TouchNodeModel == null || string.IsNullOrEmpty(TouchNodeModel.SelectedObjectID))
+                return null;
+
+            GameObject parentObject = FindObjectByID(TouchNodeModel.SelectedObjectID);
+            if (parentObject == null)
+                return null;
+
+            // Child seçili ise child'ı döndür
+            if (TouchNodeModel.IsChildObjectEnabled && !string.IsNullOrEmpty(TouchNodeModel.SelectedChildName))
+            {
+                Transform childTransform = FindChildByNameRecursive(parentObject.transform, TouchNodeModel.SelectedChildName);
+                if (childTransform != null)
+                {
+                    return childTransform.gameObject;
+                }
+            }
+
+            // Parent'ı döndür
+            return parentObject;
+        }
+
         public override void StartNode()
         {
             base.StartNode();
+            
+            // Senaryo başladığında _selectedInteractable'ı enable et
+            if (_selectedInteractable != null)
+            {
+                _selectedInteractable.enabled = true;
+                LogManager.Log($"TouchNode: Enabled interactable for {_selectedInteractable.gameObject.name}");
+            }
             
             // Runtime'da child seçili ise collider'ları ayarla (ToolTouchNodePresenter exact copy)
             if (_selectedInteractable != null && TouchNodeModel != null && TouchNodeModel.IsChildObjectEnabled)
@@ -573,12 +645,25 @@ namespace Presenters.NodePresenters
                 ActivateRuntimeChildColliders();
             }
             
+            // Seçili objenin outline'ını aktif et
+            EnableObjectOutline();
+            
             LogManager.LogScenario("TouchNode started: " + gameObject.name);
         }
 
         public override void CompleteNode()
         {
             LogManager.LogSuccess("TouchNode completed: " + gameObject.name);
+            
+            // Seçili objenin outline'ını deaktif et
+            DisableObjectOutline();
+            
+            // _selectedInteractable'ı disable et
+            if (_selectedInteractable != null)
+            {
+                _selectedInteractable.enabled = false;
+                LogManager.Log($"TouchNode: Disabled interactable for {_selectedInteractable.gameObject.name}");
+            }
             
             // Runtime'dan configuration moduna dön (ToolTouchNodePresenter exact copy)
             if (!string.IsNullOrEmpty(TouchNodeModel.SelectedObjectID))
@@ -595,6 +680,13 @@ namespace Presenters.NodePresenters
 
         public override void OnSkipNode()
         {
+            // _selectedInteractable'ı disable et
+            if (_selectedInteractable != null)
+            {
+                _selectedInteractable.enabled = false;
+                LogManager.Log($"TouchNode: Disabled interactable for {_selectedInteractable.gameObject.name}");
+            }
+            
             // Runtime'dan configuration moduna dön (ToolTouchNodePresenter exact copy)
             if (!string.IsNullOrEmpty(TouchNodeModel.SelectedObjectID))
             {

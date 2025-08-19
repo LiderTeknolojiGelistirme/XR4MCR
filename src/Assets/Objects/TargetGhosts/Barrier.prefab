@@ -20,7 +20,7 @@ GameObject:
   - component: {fileID: 1798011464888158753}
   - component: {fileID: 4843545540357353606}
   - component: {fileID: 4366234119956927357}
-  - component: {fileID: 5389360387140952472}
+  - component: {fileID: 4359077766942163761}
   m_Layer: 0
   m_Name: Barrier
   m_TagString: Untagged
@@ -340,7 +340,7 @@ MonoBehaviour:
   allowDirectInteraction: 1
   allowRayInteraction: 0
   allowDistanceSelectInteraction: 0
---- !u!114 &5389360387140952472
+--- !u!114 &4359077766942163761
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -349,10 +349,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3092146296593901791}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 6
 --- !u!1 &8311693445798186370
 GameObject:
   m_ObjectHideFlags: 0

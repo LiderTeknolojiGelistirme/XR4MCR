@@ -110,6 +110,9 @@ MonoBehaviour:
   - id: yellow-line
     prefab: {fileID: 1312225139167484232, guid: 142f88b0be55a0544b0103a721aef34c,
       type: 3}
+  - id: computerfan
+    prefab: {fileID: 377451983704469658, guid: f76e5abfa9384194a95564b3a663b3a1,
+      type: 3}
 --- !u!114 &1859745656799773388
 MonoBehaviour:
   m_ObjectHideFlags: 0

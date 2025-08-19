@@ -1,3 +1,4 @@
+using Actions;
 using UnityEngine;
 using Zenject;
 using Managers;
@@ -84,13 +85,14 @@ public class GraphSceneInstaller : MonoInstaller
             .FromComponentInHierarchy()
             .AsSingle();
 
+        Container.Bind<ConnectionCreateAction>().FromComponentInHierarchy().AsSingle();
+        Container.Bind<InitializeNodeAction>().FromComponentInHierarchy().AsSingle();
+
         // Factories
         Container.BindFactory<Vector2, NodeType,BaseNode, BaseNodePresenter, NodePresenterFactory>()
             .FromFactory<NodePresenterFactory>();
 
-        // ConnectionPresenterFactory MonoBehaviour olarak bind et
-        Container.Bind<ConnectionPresenterFactory>()
-            .FromComponentInHierarchy()
+        Container.BindFactory<ConnectionPresenter, ConnectionPresenterFactory>()
             .AsSingle();
 
         // Object Factory - 3D nesneleri oluşturmak için

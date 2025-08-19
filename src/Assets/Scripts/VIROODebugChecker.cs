@@ -137,12 +137,40 @@ namespace Helpers
                 // Raycast test et
                 if (rayInteractor.gameObject.activeInHierarchy && rayInteractor.enabled)
                 {
+                    // OLD METHOD TEST
                     bool hasHit = rayInteractor.TryGetCurrent3DRaycastHit(out UnityEngine.RaycastHit hit);
-                    LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] has raycast hit: {hasHit}");
+                    LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] OLD method raycast hit: {hasHit}");
                     if (hasHit)
                     {
-                        LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] hit object: {(hit.transform != null ? hit.transform.name : "NULL")}");
-                        LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] hit point: {hit.point}");
+                        LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] OLD hit object: {(hit.transform != null ? hit.transform.name : "NULL")}");
+                        LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] OLD hit point: {hit.point}");
+                    }
+                    
+                    // NEW PRECISION METHOD TEST (via XRInputManager)
+                    var inputMgr = FindObjectOfType<XRInputManager>();
+                    if (inputMgr != null)
+                    {
+                        bool hasPrecisionHit = inputMgr.TryGetPrecisionRaycastHit(out RaycastHit precisionHit);
+                        LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] NEW precision raycast hit: {hasPrecisionHit}");
+                        if (hasPrecisionHit)
+                        {
+                            LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] NEW precision hit object: {(precisionHit.transform != null ? precisionHit.transform.name : "NULL")}");
+                            LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] NEW precision hit point: {precisionHit.point}");
+                            
+                            // Compare results
+                            if (hasHit && hasPrecisionHit)
+                            {
+                                float distance = Vector3.Distance(hit.point, precisionHit.point);
+                                LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] Distance between OLD/NEW methods: {distance}");
+                                
+                                bool sameObject = (hit.transform == precisionHit.transform);
+                                LogManager.Log($"VIROO CHECK: XRRayInteractor[{i}] Same hit object: {sameObject}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        LogManager.LogWarning("VIROO CHECK: XRInputManager not found for precision test!");
                     }
                 }
             }

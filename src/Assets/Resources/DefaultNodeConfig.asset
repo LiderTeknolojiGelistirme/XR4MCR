@@ -131,6 +131,10 @@ MonoBehaviour:
     type: 3}
   controlboxPrefab: {fileID: 7253130430721737346, guid: ed151999b9bc4c544925763040defcab,
     type: 3}
+  computerFanPrefab: {fileID: 377451983704469658, guid: f76e5abfa9384194a95564b3a663b3a1,
+    type: 3}
+  ur10seperatedPrefab: {fileID: 7913427678426776272, guid: 680662b24c0eba541ad2acf22aa9049d,
+    type: 3}
   achievementCanvas: {fileID: 4714512366906773289, guid: 56ffac0885456cb45a85e1ff2e5023b1,
     type: 3}
   worldNotificationCanvas: {fileID: 1650659017430773953, guid: fde1ab3975bac3247803f18e6ce0c019,

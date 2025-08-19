@@ -1,16 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Presenters;
 using Presenters.NodePresenters;
 using Models;
-using System.Linq;
 using Helpers.UI;
 using TMPro;
 using Zenject;
 using NodeSystem;
 using UnityEngine.EventSystems;
 using VIVE.OpenXR.Samples.Spectator.AdvDemo;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UI;
 
 namespace Managers
 {
@@ -23,6 +26,8 @@ namespace Managers
         [Inject] private UIManager _uiManager;
         [Inject] private NodeConfig _nodeConfig;
         [Inject] private DiContainer _container;
+        private ScenarioFileManager _scenarioFileManager;
+
 
         public GameObject achievementCanvas {  get; private set; }
 
@@ -33,12 +38,14 @@ namespace Managers
         private Dictionary<BaseNodePresenter, int> _nodeLayers = new Dictionary<BaseNodePresenter, int>();
 
         [Inject]
-        public void Construct(GraphManager graphManager, UIManager uiManager, NodeConfig nodeConfig, DiContainer container)
+        public void Construct(GraphManager graphManager, UIManager uiManager, NodeConfig nodeConfig, 
+            DiContainer container, ScenarioFileManager scenarioFileManager)
         {
             _graphManager = graphManager;
             _uiManager = uiManager;
             _nodeConfig = nodeConfig;
             _container = container;
+            _scenarioFileManager = scenarioFileManager;
 
             Debug.Log("ScenarioManager: Constructor çağrıldı!");
             Debug.Log($"ScenarioManager: GraphManager inject edildi: {_graphManager != null}");
@@ -83,12 +90,14 @@ namespace Managers
                 ts.OnPointerClick(new PointerEventData(EventSystem.current));
             }
             
-            
             // Tüm nodeların durumunu sıfırla
             ResetAllNodeStates();
             
             // Tüm world description canvas'larını gizle
             HideAllWorldDescriptionCanvases();
+            
+            // Tüm GrabNode target ghost'larını gizle
+            HideAllGrabNodeTargetGhosts();
             
             // Node seviyelerini hesapla
             CalculateNodeLayers();
@@ -181,6 +190,38 @@ namespace Managers
             Debug.Log($"ScenarioManager: Toplam {hiddenCanvasCount} world description canvas gizlendi.");
         }
 
+        /// <summary>
+        /// Tüm GrabNode'ların target ghost'larını gizler
+        /// </summary>
+        private void HideAllGrabNodeTargetGhosts()
+        {
+            Debug.Log("ScenarioManager: Tüm GrabNode target ghost'ları gizleniyor...");
+            
+            int hiddenGhostCount = 0;
+            
+            // GraphManager'dan tüm nodeları al
+            if (_graphManager != null && _graphManager.NodePresenters != null)
+            {
+                foreach (var node in _graphManager.NodePresenters)
+                {
+                    // GrabNodePresenter tipindeki node'ları kontrol et
+                    if (node is GrabNodePresenter grabNode)
+                    {
+                        grabNode.HideTargetGhost();
+                        hiddenGhostCount++;
+                    }
+                }
+            }
+            
+            Debug.Log($"ScenarioManager: Toplam {hiddenGhostCount} GrabNode target ghost gizlendi.");
+        }
+
+        public void ReloadScenario()
+        {
+            LogManager.Log("ScenarioManager: Senaryo yeniden yükleniyor...");
+            _scenarioFileManager.ReloadScenario();
+        }
+
         public void FinishScenario()
         {
             Debug.Log("ScenarioManager: Senaryo tamamlandı!");
@@ -201,6 +242,9 @@ namespace Managers
             string currentNodeTitle = ActiveNodePresenter?.Model.Title ?? "Bilinmeyen";
             Debug.Log($"ScenarioManager: Bir sonraki node'a geçilecek. Şu anki node: {currentNodeTitle}");
             
+            // Tüm GrabNode target ghost'larını gizle
+            HideAllGrabNodeTargetGhosts();
+            
             ActiveNodePresenter?.OnSkipNode();
             
             string nextNodeTitle = ActiveNodePresenter?.Model.Title ?? "Bilinmeyen"; 
@@ -214,6 +258,9 @@ namespace Managers
         {
             string currentNodeTitle = ActiveNodePresenter?.Model.Title ?? "Bilinmeyen";
             Debug.Log($"ScenarioManager: Bir önceki node'a geçilecek. Şu anki node: {currentNodeTitle}");
+            
+            // Tüm GrabNode target ghost'larını gizle
+            HideAllGrabNodeTargetGhosts();
             
             ActiveNodePresenter?.GoToPreviousNode();
             
@@ -413,6 +460,9 @@ namespace Managers
         {
             Debug.Log("ScenarioManager: EditModeOn çağrıldı - Tüm düzenleme UI elemanları gösterilecek");
             
+            // Tüm grab interactable'ları etkinleştir (düzenleme modu)
+            RestoreAllGrabInteractables();
+            
             // GraphManager'dan tüm nodeları al
             if (_graphManager != null && _graphManager.NodePresenters != null)
             {
@@ -439,6 +489,9 @@ namespace Managers
         {
             Debug.Log("ScenarioManager: EditModeOff çağrıldı - Tüm düzenleme UI elemanları gizlenecek");
             
+            // Önce tüm grab interactable'ları devre dışı bırak
+            DisableAllGrabInteractables();
+            
             // GraphManager'dan tüm nodeları al
             if (_graphManager != null && _graphManager.NodePresenters != null)
             {
@@ -456,6 +509,66 @@ namespace Managers
             {
                 Debug.LogWarning("ScenarioManager: EditModeOff çağrıldı ancak GraphManager veya NodePresenters null!");
             }
+        }
+
+        #endregion
+
+        #region Grab Interactable Management
+
+        /// <summary>
+        /// Sahne içindeki tüm grab interactable componentlerini devre dışı bırakır
+        /// </summary>
+        private void DisableAllGrabInteractables()
+        {
+            // Unity XRGrabInteractable'ları bul
+            XRGrabInteractable[] standardGrabInteractables = FindObjectsByType<XRGrabInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            
+            // Viroo XRGrabInteractable'ları bul (reflection ile)
+            var virooGrabInteractables = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .Where(mb => mb.GetType().Name.Contains("VirooXRGrab") || mb.GetType().Name.Contains("VirooXRSimple"))
+                .ToArray();
+            
+            Debug.Log($"ScenarioManager: Disabling {standardGrabInteractables.Length} standard + {virooGrabInteractables.Length} Viroo grab interactables:");
+            
+            // Standard XRGrabInteractable'ları kapat
+            foreach (var grabInteractable in standardGrabInteractables)
+            {
+                Debug.Log($"  - Disabling standard grab: {grabInteractable.gameObject.name}");
+                grabInteractable.enabled = false;
+            }
+            
+            // Viroo grab interactable'ları kapat
+            foreach (var virooInteractable in virooGrabInteractables)
+            {
+                Debug.Log($"  - Disabling Viroo grab: {virooInteractable.gameObject.name} ({virooInteractable.GetType().Name})");
+                virooInteractable.enabled = false;
+            }
+        }
+
+        /// <summary>
+        /// Sahne içindeki tüm grab interactable componentlerini geri yükler
+        /// </summary>
+        private void RestoreAllGrabInteractables()
+        {
+            // Unity XRGrabInteractable'ları geri yükle
+            XRGrabInteractable[] standardGrabInteractables = FindObjectsByType<XRGrabInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            
+            // Viroo XRGrabInteractable'ları geri yükle
+            var virooGrabInteractables = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .Where(mb => mb.GetType().Name.Contains("VirooXRGrab") || mb.GetType().Name.Contains("VirooXRSimple"))
+                .ToArray();
+            
+            foreach (var grabInteractable in standardGrabInteractables)
+            {
+                grabInteractable.enabled = true;
+            }
+            
+            foreach (var virooInteractable in virooGrabInteractables)
+            {
+                virooInteractable.enabled = true;
+            }
+            
+            Debug.Log($"ScenarioManager: Restored {standardGrabInteractables.Length} standard + {virooGrabInteractables.Length} Viroo grab interactables");
         }
 
         #endregion

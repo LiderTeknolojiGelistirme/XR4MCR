@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -83,9 +84,9 @@ namespace Presenters
 
         private void Update()
         {
-            if (!_isConstructed) return;
-            UpdateLine();
-            _model.line.Draw(_graphManager.LineRenderer);
+                if (!_isConstructed) return;
+                UpdateLine();
+                _model?.line.Draw(_graphManager.LineRenderer);
         }
 
 
@@ -93,10 +94,40 @@ namespace Presenters
 
         public void UpdateLine()
         {
-
-            // Eğer tüm referanslar null değilse, devam edebilirsiniz.
-            if (_graphManager != null)
+            try 
             {
+                // Null check'ler (sadece error'lar log'lanıyor)
+                if (_graphManager == null)
+                {
+                    LogManager.LogError($"[UpdateLine] GraphManager NULL! Connection: {gameObject.name}");
+                    return;
+                }
+
+                if (_model == null)
+                {
+                    LogManager.LogError($"[UpdateLine] Model NULL! Connection: {gameObject.name}");
+                    return;
+                }
+
+                if (_model.SourcePort == null)
+                {
+                    LogManager.LogError($"[UpdateLine] SourcePort NULL! Connection: {gameObject.name}");
+                    return;
+                }
+
+                if (_model.TargetPort == null)
+                {
+                    LogManager.LogError($"[UpdateLine] TargetPort NULL! Connection: {gameObject.name}");
+                    return;
+                }
+
+                if (_model.line == null)
+                {
+                    LogManager.LogError($"[UpdateLine] Model.line NULL! Connection: {gameObject.name}");
+                    return;
+                }
+
+                // Pozisyonları hesapla
                 Vector3[] linePoints = LTGUtility.WorldToScreenPointsForRenderMode(_graphManager, new Vector3[]
                 {
                     _model.SourcePort.transform.position,
@@ -118,7 +149,15 @@ namespace Presenters
                     );
                 }
 
-                Model.line.SetPoints(newPoints);
+                // Line points'leri set et
+                _model.line.SetPoints(newPoints);
+                
+                // Verbose success log kaldırıldı (performans için)
+            }
+            catch (System.Exception ex)
+            {
+                LogManager.LogError($"[UpdateLine] Hata! Connection: {gameObject.name}, Error: {ex.Message}");
+                LogManager.LogError($"[UpdateLine] StackTrace: {ex.StackTrace}");
             }
         }
 

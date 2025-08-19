@@ -187,7 +187,7 @@ GameObject:
   - component: {fileID: 7524266147678393404}
   - component: {fileID: 5943885255482990472}
   - component: {fileID: 2758307618848615039}
-  - component: {fileID: -3756966270216835306}
+  - component: {fileID: 2714306910240433187}
   m_Layer: 0
   m_Name: Button
   m_TagString: Untagged
@@ -520,7 +520,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2febf4ca94876c14e9f11be1409b87f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &-3756966270216835306
+--- !u!114 &2714306910240433187
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -529,10 +529,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1360097656767615551}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 8
 --- !u!1 &2122751910078977638
 GameObject:
   m_ObjectHideFlags: 0

@@ -103,7 +103,7 @@ GameObject:
   - component: {fileID: 2840214852004569289}
   - component: {fileID: 4854011582053571162}
   - component: {fileID: 3233764387286208484}
-  - component: {fileID: -3497306201298789709}
+  - component: {fileID: 3569763989729418502}
   m_Layer: 0
   m_Name: WhiteDesk
   m_TagString: Untagged
@@ -423,7 +423,7 @@ MonoBehaviour:
   behaviourId: 
   persistType: 0
   updateType: 0
---- !u!114 &-3497306201298789709
+--- !u!114 &3569763989729418502
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -432,7 +432,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 6505933247717161021}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fdbdc82037df14e81b01bee0f4460b, type: 3}
+  m_Script: {fileID: 11500000, guid: cff005aeb0eaa764fa8c01b63174afb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectType: 17

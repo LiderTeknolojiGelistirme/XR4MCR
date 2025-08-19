@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿
+using System.Collections;
 using _3rd_Party.Outline;
 using Models;
 using UnityEngine;
@@ -15,8 +16,16 @@ namespace Presenters
         [SerializeField] private ObjectType _objectType = ObjectType.Unknown;
         
         private ObjectModel _model;
-
         private Outline _outline;
+        
+        // ISelectable için gerekli dependency'ler
+        private SystemManager _systemManager;
+        
+        // ISelectable properties
+        public bool EnableSelect { get; set; } = true;
+        
+        // IElement properties
+        public int Priority { get; } = 1;
 
         [Inject]
         public void Construct()
@@ -51,6 +60,7 @@ namespace Presenters
 
         public void Remove()
         {
+            LogManager.LogInteraction($"ObjectPresenter.Remove called for: {gameObject.name}");
             Destroy(gameObject);
         }
 

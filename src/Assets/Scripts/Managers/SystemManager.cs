@@ -26,6 +26,13 @@ namespace Managers
         private bool _searchFinished = false;
 
         private GameObject _tutorialLeft, _tutorialRight;
+        
+        // VR Hand Prefabs için değişkenler
+        [SerializeField] private GameObject _rightHandPrefab;
+        [SerializeField] private GameObject _leftHandPrefab;
+        private GameObject _instantiatedRightHandPrefab;
+        private GameObject _instantiatedLeftHandPrefab;
+        private bool _handPrefabsInstantiated = false;
 
         public TransformGizmo _transformGizmo;
         public int maxUndoCount = 100;
@@ -358,6 +365,89 @@ namespace Managers
             {
                 Debug.LogWarning("ScenarioArea GameObject referansı null!");
             }
+        }
+
+        /// <summary>
+        /// VR riginin ellerine prefabları ekler/kaldırır (toggle)
+        /// </summary>
+        public void ToggleHandPrefabs()
+        {
+            if (!_handPrefabsInstantiated)
+            {
+                InstantiateHandPrefabs();
+            }
+            else
+            {
+                ToggleHandPrefabsVisibility();
+            }
+        }
+
+        /// <summary>
+        /// VR riginin ellerini bulur ve prefabları instantiate eder
+        /// </summary>
+        private void InstantiateHandPrefabs()
+        {
+            // Sağ el için
+            GameObject rightHandAnchor = GameObject.Find("RightHandAnchor");
+            if (rightHandAnchor != null && _rightHandPrefab != null)
+            {
+                _instantiatedRightHandPrefab = Instantiate(_rightHandPrefab, rightHandAnchor.transform);
+                LogManager.Log("SYSTEM: Right hand prefab instantiated");
+            }
+            else
+            {
+                if (rightHandAnchor == null)
+                    LogManager.LogError("SYSTEM: RightHandAnchor not found!");
+                if (_rightHandPrefab == null)
+                    LogManager.LogError("SYSTEM: Right hand prefab not assigned!");
+            }
+
+            // Sol el için
+            GameObject leftHandAnchor = GameObject.Find("LeftHandAnchor");
+            if (leftHandAnchor != null && _leftHandPrefab != null)
+            {
+                _instantiatedLeftHandPrefab = Instantiate(_leftHandPrefab, leftHandAnchor.transform);
+                LogManager.Log("SYSTEM: Left hand prefab instantiated");
+            }
+            else
+            {
+                if (leftHandAnchor == null)
+                    LogManager.LogError("SYSTEM: LeftHandAnchor not found!");
+                if (_leftHandPrefab == null)
+                    LogManager.LogError("SYSTEM: Left hand prefab not assigned!");
+            }
+
+            _handPrefabsInstantiated = true;
+            LogManager.Log("SYSTEM: Hand prefabs instantiation completed");
+        }
+
+        /// <summary>
+        /// Instantiate edilmiş el prefablarının görünürlüğünü toggle eder
+        /// </summary>
+        private void ToggleHandPrefabsVisibility()
+        {
+            bool currentState = false;
+            
+            // Mevcut durumu kontrol et (sağ elden)
+            if (_instantiatedRightHandPrefab != null)
+            {
+                currentState = _instantiatedRightHandPrefab.activeInHierarchy;
+            }
+
+            // Sağ el prefabı toggle
+            if (_instantiatedRightHandPrefab != null)
+            {
+                _instantiatedRightHandPrefab.SetActive(!currentState);
+            }
+
+            // Sol el prefabı toggle
+            if (_instantiatedLeftHandPrefab != null)
+            {
+                _instantiatedLeftHandPrefab.SetActive(!currentState);
+            }
+
+            string statusMessage = !currentState ? "enabled" : "disabled";
+            LogManager.Log($"SYSTEM: Hand prefabs {statusMessage}");
         }
     }
 }

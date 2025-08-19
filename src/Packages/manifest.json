@@ -5,7 +5,7 @@
     "com.htc.upm.wave.essence": "https://github.com/ViveSoftware/VIVE-Wave.git?path=com.htc.upm.wave.essence",
     "com.htc.upm.wave.native": "https://github.com/ViveSoftware/VIVE-Wave.git?path=com.htc.upm.wave.native",
     "com.htc.upm.wave.xrsdk": "https://github.com/ViveSoftware/VIVE-Wave.git?path=com.htc.upm.wave.xrsdk",
-    "com.meta.xr.simulator": "74.0.0",
+    "com.meta.xr.simulator": "77.0.0",
     "com.preliy.flange": "https://github.com/Preliy/Flange.git#upm",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.addressables": "1.21.21",

@@ -106,6 +106,12 @@ namespace Factories
                 case ObjectType.ControlBox:
                     prefabToInstantiate = _config.controlboxPrefab;
                     break;
+                case ObjectType.ComputerFan:
+                    prefabToInstantiate = _config.computerFanPrefab;
+                    break;
+                case ObjectType.ur10seperated:
+                    prefabToInstantiate = _config.ur10seperatedPrefab;
+                    break;
                 default:
                     Debug.LogError("Bilinmeyen ObjectType: " + objectType);
                     return null;
